@@ -165,9 +165,3 @@ if __name__ == "__main__":
             print(f"Score: {score:.3f} | {name} ({category})")
             print(f"  Description: {description[:60]}...")
             print()
-    
-    # Show all products
-    print("\nAll products in database:")
-    all_products = rag.get_all_products()
-    for product in all_products:
-        print(f"ID: {product['id']} | {product['name']} ({product['category']})")
