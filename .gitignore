@@ -1,1 +1,4 @@
 src/models/*
+src/products.db
+src/dataset.txt
+src/config.ini
