@@ -47,10 +47,17 @@ python src/main.py
 
 By default the server will run on port 8888. There is a Swagger UI available at `/apidocs` that allows you to test the API endpoints. (e.g. `http://127.0.0.1:8888/apidocs`)
 
-Configuration of the server is done via the `config.ini` file.
+Configuration of the server is done via the `config.ini` file. The API Key to use *external models* is set up in `.env` with the following format:
+```
+
+```
 
 In particular, you *must* set the `model.path` option to the *absolute* path of the GGUF model you want to use. I recommend you put your `.gguf` file under `src/models`; the `.gitignore` for this repository has already been set up to ignore files in this directory.
 
-There are two API endpoints available:
-- `/infer`: This endpoint takes a string prompt and returns the model's output, using a system prompt defined using the `system_prompt` variable in `main.py`.
+There are multiple API endpoints available:
+- `/health`: Returns the state of the models. 
+- `/infer_local`: This endpoint takes a string prompt and returns the model's output. This is the model that will handle the ad insertion (Mistral 7B).
+- `/infer_external`: This endpoint performs inference using external model. This is the model that will provide the answers (DeepSeek V3). THIS IS NOT IMPLEMENTED YET.
+- `/retrieve_ads`: This endpoint performs RAG with the input text and the advertisement databse (Stella-en-1.5B). THIS IS NOT IMPLEMENTED YET.
 - `/insert_native_ads`: This endpoint takes a string, and the server returns that string, modified to include a native ad, if an appropriate subject is found. THIS IS NOT IMPLEMENTED YET.
+![Server Diagram](./docs/insert_native_ads_diagram.png)
