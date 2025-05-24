@@ -124,7 +124,7 @@ def insert_native_ads_endpoint():
     # Insert native ads into the text using the loaded model (Placeholder)
     # TODO: Replace this with ad insertion logic
     print(f"Received text for ad insertion: {text}") # Placeholder
-    text_with_ad_result = f"Text with ad inserted: {text} [AD: Buy our amazing product!] (using {model})" # Placeholder
+    text_with_ad_result = f"Text with ad inserted: {text} [AD: Buy our amazing product!]" # Placeholder
 
     return jsonify({"text_with_ad": text_with_ad_result})
 
