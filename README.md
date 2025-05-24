@@ -43,7 +43,7 @@ By default the server will run on port 8888. There is a Swagger UI available at 
 
 Configuration of the server is done via the `config.ini` file.
 
-In particular, you *must* set the `model.path` option to the path of the GGUF model you want to use. I recommend you put your `.gguf` file under `src/models`; the `.gitignore` for this repository has already been set up to ignore files in this directory.
+In particular, you *must* set the `model.path` option to the *absolute* path of the GGUF model you want to use. I recommend you put your `.gguf` file under `src/models`; the `.gitignore` for this repository has already been set up to ignore files in this directory.
 
 There are two API endpoints available:
 - `/infer`: This endpoint takes a string prompt and returns the model's output, using a system prompt defined using the `system_prompt` variable in `main.py`.

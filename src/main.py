@@ -13,8 +13,6 @@ hostname = '0.0.0.0'
 port = 8888
 
 model = None
-system_prompt = "You are a helpful assistant."
-
 
 @app.route('/infer', methods=['POST'])
 def infer_endpoint():
@@ -49,35 +47,36 @@ def infer_endpoint():
       500:
         description: Inference Error - An error occurred during inference
     """
-    # Check if the model has been loaded (should be if running via __main__)
     if model is None:
-         return jsonify({"error": "Server is not fully initialized (model not loaded)"}), 500 # Internal Server Error
+        return jsonify({"error": "Server is not fully initialized (model not loaded)"}), 500
 
     if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 415 # Unsupported Media Type
+        return jsonify({"error": "Request must be JSON"}), 415
 
     data = request.get_json()
     prompt = data.get('prompt')
 
     if not prompt:
-        return jsonify({"error": "Missing 'prompt' in request body"}), 400 # Bad Request
+        return jsonify({"error": "Missing 'prompt' in request body"}), 400
 
-    inference_result = model.create_chat_completion(
-            messages = [
-                {"role": "system", "content": f"{system_prompt}"},
-                {
-                    "role": "user",
-                    "content": f"{prompt}"
-                }
-            ],
-    )
+    try:
+        inference_result = model(
+            prompt,
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            repeat_penalty=1.2,
+            stop=["\n", "\n\n", "</s>", "Question:", "?"]
+        )
 
-    if inference_result and inference_result['choices'] and inference_result['choices'][0]['message'] and inference_result['choices'][0]['message']['content']:
-        inferred_result = inference_result['choices'][0]['message']['content'].strip()
-    else:
-        return jsonify({"error": "Inference failed; check server logs"}), 515 # Inference Error
+        if inference_result and inference_result['choices']:
+            inferred_result = inference_result['choices'][0]['text'].strip()
+            return jsonify({"inferred": inferred_result})
+        else:
+            return jsonify({"error": "Inference failed; check server logs"}), 500
 
-    return jsonify({"inferred": inferred_result})
+    except Exception as e:
+        return jsonify({"error": f"Inference failed: {str(e)}"}), 500
 
 @app.route('/insert_native_ads', methods=['POST'])
 def insert_native_ads_endpoint():
@@ -146,9 +145,7 @@ if __name__ == '__main__':
         hostname = config.get('server', 'hostname', fallback='0.0.0.0')
         port = config.getint('server', 'port', fallback=8888) # Use getint for port
 
-        model_relative_path = config.get('model', 'path')
-        model_path = os.path.join(script_dir, model_relative_path)
-
+        model_path = config.get('model', 'path')
         max_tokens = config.getint('model', 'max_tokens', fallback=2048)
 
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
@@ -165,7 +162,7 @@ if __name__ == '__main__':
         model = Llama(
             model_path=model_path,
             n_gpu_layers=-1, 
-            n_ctx=0,
+            n_ctx=2048,
         )
         print(f"Model loaded successfully: {model}") # Placeholder
     except Exception as e:
