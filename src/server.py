@@ -160,7 +160,6 @@ def embed_endpoint():
         return jsonify({
             "embedding": embedding_list,
             "dimension": len(embedding_list),
-            "model": "stella-en-1.5B-v5",
             "instruction": instruction
         })
         
