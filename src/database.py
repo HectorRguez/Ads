@@ -27,21 +27,31 @@ class SimpleProductRAG:
     
     def get_embedding(self, text: str) -> np.ndarray:
         """Get embedding from Mistral server"""
-        response = requests.post(
-            f"{self.mistral_url}/infer",
-            json={"prompt": f"Encode this product information: {text}"},
-            headers={"Content-Type": "application/json"}
-        )
+        try:
+            response = requests.post(
+                f"{self.mistral_url}/embed",
+                json={"text": text},
+                headers={"Content-Type": "application/json"},
+                timeout=30  # Add timeout for better error handling
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                embedding = np.array(result["embedding"], dtype=np.float32)
+                
+                # Normalize the embedding for cosine similarity
+                embedding = embedding / np.linalg.norm(embedding)
+                
+                return embedding
+            else:
+                print(f"Embedding API error: {response.status_code} - {response.text}")
+                raise Exception(f"Embedding API failed: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+        except Exception as e:
+            print(f"Embedding error: {e}")
         
-        if response.status_code == 200:
-            # For now, we'll create a simple hash-based embedding
-            # You'll replace this with actual Mistral hidden states
-            text_hash = hash(text)
-            embedding = np.random.RandomState(text_hash % (2**32)).randn(512)
-            return embedding.astype(np.float32)
-        else:
-            raise Exception(f"Failed to get embedding: {response.text}")
-    
     def add_product(self, name: str, category: str, description: str):
         """Add a product to the database"""
         # Combine product info for embedding

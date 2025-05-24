@@ -78,6 +78,91 @@ def infer_endpoint():
     except Exception as e:
         return jsonify({"error": f"Inference failed: {str(e)}"}), 500
 
+@app.route('/embed', methods=['POST'])
+def embed_endpoint():
+    """
+    Generate embeddings for text.
+    ---
+    parameters:
+      - name: text
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            text:
+              type: string
+              description: The input text to embed
+    responses:
+      200:
+        description: Successful embedding generation
+        schema:
+          type: object
+          properties:
+            embedding:
+              type: array
+              items:
+                type: number
+              description: The embedding vector
+            dimension:
+              type: integer
+              description: The dimension of the embedding
+      400:
+        description: Bad Request - Missing 'text'
+      415:
+        description: Unsupported Media Type - Request must be JSON
+      500:
+        description: Internal Server Error - Model not loaded
+    """
+    if model is None:
+        return jsonify({"error": "Server is not fully initialized (model not loaded)"}), 500
+
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 415
+
+    data = request.get_json()
+    text = data.get('text')
+
+    if not text:
+        return jsonify({"error": "Missing 'text' in request body"}), 400
+
+    try:
+        # Generate embedding by extracting hidden states from the model
+        # We'll use a special prompt to get meaningful representations
+        embedding_prompt = f"[INST] Represent this text for semantic search: {text} [/INST]"
+        
+        # Generate tokens and get hidden states
+        tokens = model.tokenize(embedding_prompt.encode('utf-8'))
+        
+        # Reset the model state
+        model.reset()
+        
+        # Process tokens and extract hidden states
+        hidden_states = []
+        for token in tokens:
+            model.eval([token])
+            # Get the last hidden state (this is model-specific)
+            # For llama-cpp-python, we can access the hidden states like this:
+            if hasattr(model, 'get_embeddings') and model.get_embeddings():
+                hidden_state = model.get_embeddings()
+                hidden_states.append(hidden_state)
+        
+        if hidden_states:
+            # Use the last hidden state as the embedding
+            embedding = hidden_states[-1]
+            
+            # Convert to list for JSON serialization
+            embedding_list = embedding.tolist() if hasattr(embedding, 'tolist') else list(embedding)
+            
+            return jsonify({
+                "embedding": embedding_list,
+                "dimension": len(embedding_list)
+            })
+        
+    except Exception as e:
+        print(f"Embedding generation error: {str(e)}")
+        return jsonify({"error": f"Embedding generation failed: {str(e)}"}), 500
+    
 @app.route('/insert_native_ads', methods=['POST'])
 def insert_native_ads_endpoint():
     """
