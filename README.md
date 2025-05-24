@@ -31,12 +31,18 @@ pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
 
 This will take a significant amount of time, as it builds the library from source.
 
+---
+¹ **Note**: If you encounter library loading errors during compilation, you may need to set the library path:
+```bash
+export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+```
+
 ## Running the server
 
 To run the server, activate your `conda` environment and run the following command:
 
 ```bash
-python src/server.py
+python src/main.py
 ```
 
 By default the server will run on port 8888. There is a Swagger UI available at `/apidocs` that allows you to test the API endpoints. (e.g. `http://127.0.0.1:8888/apidocs`)
