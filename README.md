@@ -1,4 +1,4 @@
-# Ads
+# A Framework for Seamless Advertising in LLM Responses
 This repository provides a Flask-based server for running Large Language Models with integrated RAG (Retrieval-Augmented Generation) capabilities. The main API endpoint seamlessly integrates ads into LLMs outputs. This server combines:
 - DeepSeek V3 API for text generation and inference. **NOT IMPLEMENTED YET**.
 - Mistral 7B for advertisement integration. 
@@ -71,7 +71,7 @@ huggingface-cli download \
 ```
 ### 4. Configuration
 
-Create `config.ini`:
+Create `config.ini` and save it in the `src` directory:
 
 ```ini
 [server]
@@ -95,7 +95,7 @@ csv_path = products.csv
 
 ### Data Format
 
-The CSV should be tab-separated with these columns:
+The CSV should be tab-separated with these columns, and it should be stored inside the `src/` directory:
 
 | Name | Category | Description |
 |------|----------|-------------|
@@ -148,11 +148,7 @@ curl -X POST http://localhost:8888/search \
   -H "Content-Type: application/json" \
   -d '{"query": "secure VPN", "top_k": 3}'
 ```
-
-## Testing
-
-Run the comprehensive demo:
-
+**Complete demo**
 ```bash
 python server_test.py
 ```
