@@ -3,7 +3,7 @@ import sys
 import configparser
 from flask import Flask, request, jsonify
 from flasgger import Swagger
-from llama_cpp import Llama
+from llama_cpp import Llama, llama_cpp
 from sentence_transformers import SentenceTransformer
 import numpy as np
 import torch
@@ -346,42 +346,66 @@ if __name__ == '__main__':
          print("Please ensure port is an integer.", file=sys.stderr)
          sys.exit(1)
 
+    
     # Load text generation model (Mistral)
     try:
+        model_path = config.get('model', 'path')
+        model_gpu_device = config.getint('model', 'gpu_device', fallback=0)
+        
         print(f"Loading text generation model from: {model_path}")
+        print(f"Using GPU device {model_gpu_device} for text generation model")
+        
         model = Llama(
             model_path=model_path,
-            n_gpu_layers=-1, 
-            n_ctx=2048,
+            n_gpu_layers=-1,
+            n_ctx=config.getint('model', 'max_tokens', fallback=2048),
+            split_mode=llama_cpp.LLAMA_SPLIT_MODE_NONE,  # Use single GPU only
+            main_gpu=model_gpu_device,
             verbose=False
         )
         print(f"✅ Text generation model loaded successfully")
+        
     except Exception as e:
         print(f"❌ Error loading text generation model from {model_path}: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Load embedding model (Stella)
     try:
+        embedding_model_path = config.get('embedding', 'path')
+        embedding_gpu_device = config.getint('embedding', 'gpu_device', fallback=0)
+        
         print(f"Loading embedding model from: {embedding_model_path}")
         
-        # Check if we have GPU available
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # Set device for embedding model
+        if torch.cuda.is_available():
+            device = f'cuda:{embedding_gpu_device}'
+        else:
+            device = 'cpu'
+        
         print(f"Using device for embeddings: {device}")
         
         embedding_model = SentenceTransformer(
             embedding_model_path,
             device=device,
-            trust_remote_code=True  # Needed for some models
+            trust_remote_code=True
         )
         
         # Test the model with a sample text
         test_embedding = embedding_model.encode("test", show_progress_bar=False)
         print(f"✅ Embedding model loaded successfully (dimension: {len(test_embedding)})")
-        
+
     except Exception as e:
         print(f"❌ Error loading embedding model from {embedding_model_path}: {e}", file=sys.stderr)
-        print("Make sure you have downloaded the Stella model to the specified path.")
         sys.exit(1)
+
+    # Optional: Print final GPU memory usage summary
+    if torch.cuda.is_available():
+        print("\n=== GPU Memory Summary ===")
+        for i in range(torch.cuda.device_count()):
+            memory_allocated = torch.cuda.memory_allocated(i) / 1024**3
+            memory_reserved = torch.cuda.memory_reserved(i) / 1024**3
+            total_memory = torch.cuda.get_device_properties(i).total_memory / 1024**3
+            print(f"GPU {i}: {memory_allocated:.2f}GB/{total_memory:.2f}GB allocated")
 
     print(f"🚀 Starting Flask server on {hostname}:{port}")
     print(f"📝 Text generation: Mistral 7B")

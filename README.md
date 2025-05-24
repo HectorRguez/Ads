@@ -1,6 +1,8 @@
 # Ads
 Seamlessly integrate ads into LLMs outputs
 
+![Server Diagram](./docs/insert_native_ads_diagram.png)
+
 ## Installation
 
 Create a `conda` environment with the following packages:
@@ -60,4 +62,4 @@ There are multiple API endpoints available:
 - `/infer_external`: This endpoint performs inference using external model. This is the model that will provide the answers (DeepSeek V3). THIS IS NOT IMPLEMENTED YET.
 - `/retrieve_ads`: This endpoint performs RAG with the input text and the advertisement databse (Stella-en-1.5B). THIS IS NOT IMPLEMENTED YET.
 - `/insert_native_ads`: This endpoint takes a string, and the server returns that string, modified to include a native ad, if an appropriate subject is found. THIS IS NOT IMPLEMENTED YET.
-![Server Diagram](./docs/insert_native_ads_diagram.png)
+
