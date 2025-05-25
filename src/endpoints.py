@@ -144,7 +144,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             
             # Step 5: Parse the response
             modified_text = ""
-            insertion_point = ""
             reasoning = ""
             
             lines = generated_response.split('\n')
@@ -152,18 +151,9 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
                 line = line.strip()
                 if line.startswith('MODIFIED_TEXT:'):
                     modified_text = line.replace('MODIFIED_TEXT:', '').strip()
-                elif line.startswith('INSERTION_POINT:'):
-                    insertion_point = line.replace('INSERTION_POINT:', '').strip()
                 elif line.startswith('REASONING:'):
                     reasoning = line.replace('REASONING:', '').strip()
-            
-            # Fallback if parsing failed
-            if not modified_text:
-                modified_text = f"{original_text}\n\n[Advertisement: {company_name} - {description}]"
-                insertion_point = "End of text (fallback)"
-                reasoning = "Fallback insertion due to parsing issues"
-            
-            
+        
             # Step 6: Return response
             return jsonify({
                 "modified_text": modified_text,
@@ -174,7 +164,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
                     "similarity_score": float(similarity_score)
                 },
                 "insertion_details": {
-                    "insertion_point": insertion_point,
                     "reasoning": reasoning,
                     "original_length": len(original_text),
                     "modified_length": len(modified_text)

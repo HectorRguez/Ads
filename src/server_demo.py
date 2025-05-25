@@ -6,11 +6,36 @@ import time
 BASE_URL = 'http://localhost:8888'
 HEADERS = {'Content-Type': 'application/json'}
 
+def print_separator():
+    """Print a visual separator"""
+    print("=" * 80)
+
+def print_highlighted_box(title, content, width=80):
+    """Print content in a highlighted box"""
+    print("+" + "-" * (width - 2) + "+")
+    print(f"| {title.center(width - 4)} |")
+    print("+" + "-" * (width - 2) + "+")
+    
+    # Split content into lines and wrap if needed
+    lines = content.split('\n')
+    for line in lines:
+        if len(line) <= width - 4:
+            print(f"| {line.ljust(width - 4)} |")
+        else:
+            # Wrap long lines
+            while len(line) > width - 4:
+                print(f"| {line[:width-4].ljust(width - 4)} |")
+                line = line[width-4:]
+            if line:
+                print(f"| {line.ljust(width - 4)} |")
+    
+    print("+" + "-" * (width - 2) + "+")
+
 def test_endpoint(name, method, endpoint, data=None):
     """Helper function to test endpoints with error handling"""
-    print(f"\n{'='*60}")
+    print_separator()
     print(f"Testing: {name}")
-    print(f"{'='*60}")
+    print_separator()
     
     try:
         if method.upper() == 'GET':
@@ -22,64 +47,62 @@ def test_endpoint(name, method, endpoint, data=None):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ Success! Status Code: {response.status_code}")
-            # Smart response formatting to avoid overwhelming output
-            if 'results' in result and len(result['results']) > 0:
-                print(f"Search results ({len(result['results'])} found):")
-                for i, item in enumerate(result['results'][:3]):  # Show max 3 results
-                    print(f"  {i+1}. {item.get('name', 'Unknown')} (Score: {item.get('similarity', 0):.3f})")
-            elif 'inferred' in result:
+            print(f"Success! Status Code: {response.status_code}")
+            
+            # Handle Q&A results with highlighting
+            if 'inferred' in result:
                 question = result.get('question', 'N/A')
                 answer = result.get('inferred', 'N/A')
-                prompt = result.get('prompt', 'N/A')
-                print(f"Q&A Generation Results:")
-                print(f"   Question: {question}")
-                print(f"   Answer: {answer}")
-                print(f"   Prompt: {prompt}")
+                
+                print("\nQ&A Generation Results:")
+                print_highlighted_box("QUESTION", question)
+                print()
+                print_highlighted_box("ANSWER", answer)
+            
+            # Handle search results
+            elif 'results' in result and len(result['results']) > 0:
+                print(f"Search results ({len(result['results'])} found):")
+                for i, item in enumerate(result['results'][:3]):
+                    print(f"  {i+1}. {item.get('name', 'Unknown')} (Score: {item.get('similarity', 0):.3f})")
+            
+            # Handle native ad insertion with highlighting
             elif 'modified_text' in result:
-                print(f"RAG-Powered Native Ad Insertion Results:")
+                print("RAG-Powered Native Ad Insertion Results:")
                 print(f"   Selected Product: {result.get('selected_product', {}).get('name', 'Unknown')}")
                 print(f"   Similarity Score: {result.get('selected_product', {}).get('similarity_score', 0):.3f}")
                 print(f"   Original length: {result['insertion_details']['original_length']} chars")
                 print(f"   Modified length: {result['insertion_details']['modified_length']} chars")
-                print(f"   Insertion point: {result['insertion_details']['insertion_point']}")
                 print(f"   Reasoning: {result['insertion_details']['reasoning']}")
-                print(f"   Related products found: {len(result['related_products'])}")
-                print(f"\n Modified Text Preview:")
-                modified_preview = result['modified_text'][:1000] + "..." if len(result['modified_text']) > 1000 else result['modified_text']
-                print(f"   {modified_preview}")
+                
+                # Get original text from the request data
+                original_text = data.get('text', 'Original text not available') if data else 'Original text not available'
+                modified_text = result['modified_text']
+                
+                print()
+                print_highlighted_box("ORIGINAL TEXT", original_text)
+                print()
+                print_highlighted_box("MODIFIED TEXT (WITH AD)", modified_text)
+                
                 if result['related_products']:
-                    print(f"\n All Related Products:")
+                    print(f"\nAll Related Products:")
                     for prod in result['related_products'][:3]:
-                        print(f"   • {prod['name']} (similarity: {prod['similarity']:.3f})")
-            else:
-                # For other responses, limit output length
-                response_str = json.dumps(result, indent=2)
-                if len(response_str) > 200:
-                    print(f"Response: {response_str[:200]}...")
-                else:
-                    print(f"Response: {response_str}")
+                        print(f"   - {prod['name']} (similarity: {prod['similarity']:.3f})")
+            
             return result
         else:
-            print(f"❌ Error: {response.status_code}")
+            print(f"Error: {response.status_code}")
             error_text = response.text
-            if len(error_text) > 100:
-                print(f"Response: {error_text[:100]}...")
-            else:
-                print(f"Response: {error_text}")
+            print(f"Response: {error_text}")
             return None
             
     except Exception as e:
-        print(f"❌ Exception: {e}")
+        print(f"Exception: {e}")
         return None
 
 def main():
     print("Starting Flask RAG Server Demo with Native Advertising")
 
-    # 1. Health Check
-    test_endpoint("Health Check", "GET", "/health")
-    
-    # 2. Text Generation Test (using original parameters)
+    # 1. Text Generation Test
     test_endpoint(
         "Text Generation (Inference)", 
         "POST", 
@@ -90,7 +113,7 @@ def main():
         }
     )
     
-    # 3. Search Tests
+    # 2. Search Tests
     search_queries = [
         'privacy protection software'
     ]
@@ -107,12 +130,11 @@ def main():
         )
         time.sleep(0.5)
     
-    # 4. Native Ad Insertion Tests (Main Feature!)    
+    # 3. Native Ad Insertion Tests  
     ad_test_cases = [
-            ''''Online privacy has become a major concern for internet users worldwide. With increasing surveillance, data collection, and cyber threats, many people are looking for ways to protect their digital footprint. There are several approaches to maintaining privacy online, including using secure browsers, enabling two-factor authentication, and being cautious about the information you share on social media platforms. Cybersecurity experts recommend using multiple layers of protection.''',
+        'Online privacy has become a major concern for internet users worldwide. With increasing surveillance, data collection, and cyber threats, many people are looking for ways to protect their digital footprint. There are several approaches to maintaining privacy online, including using secure browsers, enabling two-factor authentication, and being cautious about the information you share on social media platforms. Cybersecurity experts recommend using multiple layers of protection.',
         
-            '''The digital landscape continues to evolve rapidly, bringing both opportunities and challenges. As we become more dependent on technology for work, entertainment, and communication, it's crucial to understand the importance of cybersecurity. Malware, ransomware, and phishing attacks are becoming increasingly sophisticated, targeting both individuals and businesses. Advanced threat detection systems are essential for protection.'''
-        ,
+        'The digital landscape continues to evolve rapidly, bringing both opportunities and challenges. As we become more dependent on technology for work, entertainment, and communication, it\'s crucial to understand the importance of cybersecurity. Malware, ransomware, and phishing attacks are becoming increasingly sophisticated, targeting both individuals and businesses. Advanced threat detection systems are essential for protection.'
     ]
     
     for i, test_case in enumerate(ad_test_cases, 1):
