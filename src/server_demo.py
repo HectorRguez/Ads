@@ -1,49 +1,41 @@
 import requests
 import json
 import time
+from textwrap import fill
+import difflib
+from difflib import SequenceMatcher
 
 # Server configuration
 BASE_URL = 'http://localhost:8888'
 HEADERS = {'Content-Type': 'application/json'}
 
-def print_separator():
-    """Print a visual separator"""
-    print("=" * 80)
-
-def print_highlighted_box(title, content, width=80):
-    """Print content in a highlighted box"""
-    print("+" + "-" * (width - 2) + "+")
-    print(f"| {title.center(width - 4)} |")
-    print("+" + "-" * (width - 2) + "+")
-    
-    # Split content into lines and wrap if needed
-    lines = content.split('\n')
-    for line in lines:
-        if len(line) <= width - 4:
-            print(f"| {line.ljust(width - 4)} |")
-        else:
-            # Wrap long lines
-            while len(line) > width - 4:
-                print(f"| {line[:width-4].ljust(width - 4)} |")
-                line = line[width-4:]
-            if line:
-                print(f"| {line.ljust(width - 4)} |")
-    
-    print("+" + "-" * (width - 2) + "+")
+def print_boxed_text(title, content, highlight_markers=None, width=78):
+        """Helper function to print text in a box with optional highlighting."""
+        border = "+" + "-" * (width) + "+"
+        title_line = f"|{title.center(width)}|"
+        
+        lines = [border, title_line, border]
+        
+        # Wrap and process content
+        wrapped_lines = fill(content, width=width-4).split('\n')
+        
+        for line in wrapped_lines:
+            if highlight_markers:
+                # Apply highlighting based on markers
+                for start, end in highlight_markers.get(line, []):
+                    line = line[:start] + "**" + line[start:end] + "**" + line[end:]
+            
+            padded_line = f"| {line.ljust(width-2)} |"
+            lines.append(padded_line)
+        
+        lines.append(border)
+        return '\n'.join(lines)
 
 def test_endpoint(name, method, endpoint, data=None):
     """Helper function to test endpoints with error handling"""
-    print_separator()
-    print(f"Testing: {name}")
-    print_separator()
-    
+
     try:
-        if method.upper() == 'GET':
-            response = requests.get(f"{BASE_URL}{endpoint}")
-        elif method.upper() == 'POST':
-            response = requests.post(f"{BASE_URL}{endpoint}", headers=HEADERS, json=data)
-        elif method.upper() == 'DELETE':
-            response = requests.delete(f"{BASE_URL}{endpoint}")
+        response = requests.post(f"{BASE_URL}{endpoint}", headers=HEADERS, json=data)
         
         if response.status_code == 200:
             result = response.json()
@@ -55,34 +47,18 @@ def test_endpoint(name, method, endpoint, data=None):
                 answer = result.get('inferred', 'N/A')
                 
                 print("\nQ&A Generation Results:")
-                print_highlighted_box("QUESTION", question)
+                print(print_boxed_text("QUESTION", question))
                 print()
-                print_highlighted_box("ANSWER", answer)
-            
-            # Handle search results
-            elif 'results' in result and len(result['results']) > 0:
-                print(f"Search results ({len(result['results'])} found):")
-                for i, item in enumerate(result['results'][:3]):
-                    print(f"  {i+1}. {item.get('name', 'Unknown')} (Score: {item.get('similarity', 0):.3f})")
+                print(print_boxed_text("ANSWER", answer))
             
             # Handle native ad insertion with highlighting
-            elif 'modified_text' in result:
-                print("RAG-Powered Native Ad Insertion Results:")
-                print(f"   Selected Product: {result.get('selected_product', {}).get('name', 'Unknown')}")
-                print(f"   Similarity Score: {result.get('selected_product', {}).get('similarity_score', 0):.3f}")
-                print(f"   Original length: {result['insertion_details']['original_length']} chars")
-                print(f"   Modified length: {result['insertion_details']['modified_length']} chars")
-                print(f"   Reasoning: {result['insertion_details']['reasoning']}")
-                
-                # Get original text from the request data
+            elif 'modified_text' in result:                
                 original_text = data.get('text', 'Original text not available') if data else 'Original text not available'
                 modified_text = result['modified_text']
                 
-                print()
-                print_highlighted_box("ORIGINAL TEXT", original_text)
-                print()
-                print_highlighted_box("MODIFIED TEXT (WITH AD)", modified_text)
-                
+                print(print_boxed_text("ORIGINAL TEXT", original_text))
+                print(print_boxed_text("MODIFIED TEXT", modified_text))
+
                 if result['related_products']:
                     print(f"\nAll Related Products:")
                     for prod in result['related_products'][:3]:
@@ -113,24 +89,7 @@ def main():
         }
     )
     
-    # 2. Search Tests
-    search_queries = [
-        'privacy protection software'
-    ]
-    
-    for query in search_queries:
-        test_endpoint(
-            f"Product Search: '{query}'", 
-            "POST", 
-            "/search",
-            {
-                'query': query,
-                'top_k': 3
-            }
-        )
-        time.sleep(0.5)
-    
-    # 3. Native Ad Insertion Tests  
+    # 2. Native Ad Insertion Tests  
     ad_test_cases = [
         'Online privacy has become a major concern for internet users worldwide. With increasing surveillance, data collection, and cyber threats, many people are looking for ways to protect their digital footprint. There are several approaches to maintaining privacy online, including using secure browsers, enabling two-factor authentication, and being cautious about the information you share on social media platforms. Cybersecurity experts recommend using multiple layers of protection.',
         

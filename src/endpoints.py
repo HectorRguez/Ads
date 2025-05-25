@@ -28,7 +28,10 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             return jsonify({"error": "Missing 'prompt'"}), 400
         
         try:
-            question_template = config.get('prompts', 'qa_template')
+            question_template_path = config.get('prompts', 'qa_template_path')
+            with open(question_template_path, 'r', encoding='utf-8') as f:
+                question_template = f.read()
+
             question_prompt = question_template.format(
                 question=question
             )
@@ -127,7 +130,9 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             similarity_score = selected_product[3]
             
             # Step 3: Get ad insertion template from config
-            ad_template = config.get('prompts', 'ad_insertion_template')
+            ad_template_path = config.get('prompts', 'ad_insertion_template_path')
+            with open(ad_template_path, 'r', encoding='utf-8') as f:
+                ad_template = f.read()
             
             # Step 4: Create prompt and generate text (reuse infer logic)
             ad_prompt = ad_template.format(
@@ -140,33 +145,14 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             # Generate response using text generation
             generated_response = generate_text(text_model, ad_prompt, max_tokens)
 
-            print(f"[DEBUG] Generated response: {generated_response}")
-            
-            # Step 5: Parse the response
-            modified_text = ""
-            reasoning = ""
-            
-            lines = generated_response.split('\n')
-            for line in lines:
-                line = line.strip()
-                if line.startswith('MODIFIED_TEXT:'):
-                    modified_text = line.replace('MODIFIED_TEXT:', '').strip()
-                elif line.startswith('REASONING:'):
-                    reasoning = line.replace('REASONING:', '').strip()
-        
-            # Step 6: Return response
+            # Step 5: Return response
             return jsonify({
-                "modified_text": modified_text,
+                "modified_text": generated_response,
                 "selected_product": {
                     "name": company_name,
                     "category": category,
                     "description": description,
                     "similarity_score": float(similarity_score)
-                },
-                "insertion_details": {
-                    "reasoning": reasoning,
-                    "original_length": len(original_text),
-                    "modified_length": len(modified_text)
                 },
                 "related_products": [{
                     "name": name,

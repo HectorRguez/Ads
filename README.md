@@ -47,26 +47,17 @@ export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRA
 ```
 
 ### 3. Download models
-The fastest way to download the models is to use the `huggingface-hub`.
+The fastest way to download the models is to use the `huggingface-hub`. 
 ```bash
 pip install huggingface-hub
 huggingface-cli login
 ```
-   - Download Mistral 7B:
+Run the following script to download the models. 
 ```bash
-huggingface-cli download \
-    TheBloke/Mistral-7B-v0.1-GGUF \
-    mistral-7b-v0.1.Q4_K_M.gguf \
-    --local-dir ./models \
-    --local-dir-use-symlinks False
-``` 
-   - Download Stella-en-1.5B:
-```bash
-huggingface-cli download \
-    dunzhang/stella_en_1.5B_v5 \
-    --local-dir ./models/stella-en-1.5B \
-    --local-dir-use-symlinks False
+cd models
+source download.sh
 ```
+
 ### 4. Configuration
 
 Create `config.ini` and save it in the `src` directory:
@@ -77,25 +68,20 @@ hostname = 0.0.0.0
 port = 8888
 
 [model]
-path = /absolute/path/to/mistral-7b-v0.1.Q4_K_M.gguf
+path = models/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf
 max_tokens = 2048
 gpu_device = 0
 
 [embedding]
-path = /absolute/path/to/stella-en-1.5B
+path = models/stella-en-1.5B
 gpu_device = 0
 
 [data]
-csv_path = products.csv
+csv_path = path/to/products
 
 [prompts]
-qa_template = You are a helpful assistant. Answer the question concisely and accurately.
-    Question: {question}
-    Answer:
-
-ad_insertion_template = Add this ad to the text naturally: {company_name} - {description}
-
-    {original_text}
+qa_template_path = path/to/template
+ad_insertion_template = path/to/template
 ```
 
 ## Usage
@@ -112,7 +98,7 @@ The CSV should be tab-separated with these columns, and it should be stored insi
 ### Starting the Server
 
 ```bash
-python server.py
+python src/server.py
 ```
 
 The server will automatically:
@@ -138,30 +124,14 @@ The server will automatically:
 
 ### Examples
 
-**Text generation:**
 ```bash
-curl -X POST http://localhost:8888/infer_local \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is 2+2?"}'
-```
-
-**Product search:**
-```bash
-curl -X POST http://localhost:8888/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "secure VPN", "top_k": 3}'
-```
-**Complete demo**
-```bash
-python server_demo.py
+python src/server_demo.py
 ```
 
 This tests all functionality including:
-- Health checks and model loading
 - Text generation
 - RAG search with various queries
-- Product management operations
-- Embedding generation
+- Ad integration
 
 ## API Documentation
 
@@ -192,5 +162,6 @@ src/
 ├── models.py              # Model loading and management
 ├── rag.py                 # RAG functionality (embeddings, database, search)
 ├── endpoints.py           # All API endpoints
+├── prompts/               
 └── config.ini
 """

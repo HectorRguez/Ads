@@ -1,0 +1,3 @@
+Insert "{company_name} - {description}" into this text naturally. Add minimal extra words.
+Text: {original_text}
+Output:
