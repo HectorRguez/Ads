@@ -30,11 +30,10 @@ def test_endpoint(name, method, endpoint, data=None):
                     print(f"  {i+1}. {item.get('name', 'Unknown')} (Score: {item.get('similarity', 0):.3f})")
             elif 'inferred' in result:
                 question = result.get('question', 'N/A')
-                answer = result.get('answer', result.get('inferred', 'N/A'))
+                answer = result.get('inferred', 'N/A')
                 print(f"Q&A Generation Results:")
                 print(f"   Question: {question}")
                 print(f"   Answer: {answer}")
-                print(f"   Full response: {result.get('inferred', 'N/A')}")
             elif 'modified_text' in result:
                 print(f"RAG-Powered Native Ad Insertion Results:")
                 print(f"   Selected Product: {result.get('selected_product', {}).get('name', 'Unknown')}")

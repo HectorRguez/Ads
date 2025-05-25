@@ -28,8 +28,12 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             return jsonify({"error": "Missing 'prompt'"}), 400
         
         try:
-            result = generate_text(text_model, question, max_tokens)
+            question_template = config.get('prompts', 'qa_template')
+            question_prompt = question_template.format(
+                question=question
+            )
 
+            result = generate_text(text_model, question_prompt, max_tokens)
             return jsonify({
                 "inferred": result,
                 "question": question

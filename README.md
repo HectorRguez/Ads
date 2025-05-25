@@ -7,8 +7,6 @@ This repository provides a Flask-based server for running Large Language Models 
 
 ![Server Diagram](./docs/insert_native_ads_diagram.png)
 
-
-
 ## Installation
 
 ### 1. Create conda environment
@@ -79,23 +77,23 @@ hostname = 0.0.0.0
 port = 8888
 
 [model]
-path = /data/hector/models/mistral-7b-gguf/mistral-7b-v0.1.Q4_K_M.gguf
+path = /absolute/path/to/mistral-7b-v0.1.Q4_K_M.gguf
 max_tokens = 2048
-gpu_device = 3
+gpu_device = 0
 
 [embedding]
-path = /data/hector/models/stella-en-1.5B
-gpu_device = 2
+path = /absolute/path/to/stella-en-1.5B
+gpu_device = 0
 
 [data]
-csv_path = dataset.txt
+csv_path = products.csv
 
 [prompts]
-qa_template = <s>@@INST@@ You are a helpful assistant. Answer the question concisely and accurately.
+qa_template = <s>[INST] You are a helpful assistant. Answer the question concisely and accurately.
     Question: {question}
-    @@/INST@@
+    [/INST]
 
-ad_insertion_template = <s>@@INST@@ You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
+ad_insertion_template = <s>[INST] You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
 
     Original Text: {original_text}
 
@@ -114,7 +112,7 @@ ad_insertion_template = <s>@@INST@@ You are an expert content editor. Your task 
     MODIFIED_TEXT: your edited text with the ad integrated
     INSERTION_POINT: describe where you inserted the ad
     REASONING: brief explanation of why you chose that location
-    @@/INST@@
+    [/INST]
 ```
 
 ## Usage
@@ -158,6 +156,8 @@ The server will automatically:
 ### Examples
 
 **Text generation:**
+
+TODO: This section is outdated.
 ```bash
 curl -X POST http://localhost:8888/infer \
   -H "Content-Type: application/json" \
