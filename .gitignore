@@ -1,4 +1,4 @@
 src/models/*
 src/products.db
-src/dataset.txt
+src/products.csv
 src/config.ini

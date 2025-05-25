@@ -9,7 +9,7 @@ HEADERS = {'Content-Type': 'application/json'}
 def test_endpoint(name, method, endpoint, data=None):
     """Helper function to test endpoints with error handling"""
     print(f"\n{'='*60}")
-    print(f"🧪 Testing: {name}")
+    print(f"Testing: {name}")
     print(f"{'='*60}")
     
     try:
@@ -20,28 +20,37 @@ def test_endpoint(name, method, endpoint, data=None):
         elif method.upper() == 'DELETE':
             response = requests.delete(f"{BASE_URL}{endpoint}")
         
-        print(f"Status Code: {response.status_code}")
-        
         if response.status_code == 200:
             result = response.json()
-            print("✅ Success!")
-            
+            print(f"✅ Success! Status Code: {response.status_code}")
             # Smart response formatting to avoid overwhelming output
-            if 'products' in result and len(result['products']) > 0:
-                print(f"Found {len(result['products'])} products")
-                if len(result['products']) <= 3:
-                    for p in result['products']:
-                        print(f"  • {p.get('name', 'Unknown')}")
-                else:
-                    print(f"  • {result['products'][0].get('name', 'Unknown')} (and {len(result['products'])-1} more)")
-            elif 'results' in result and len(result['results']) > 0:
+            if 'results' in result and len(result['results']) > 0:
                 print(f"Search results ({len(result['results'])} found):")
                 for i, item in enumerate(result['results'][:3]):  # Show max 3 results
                     print(f"  {i+1}. {item.get('name', 'Unknown')} (Score: {item.get('similarity', 0):.3f})")
-            elif 'embedding' in result:
-                print(f"Generated embedding (dimension: {len(result['embedding'])})")
-            elif 'embeddings' in result:
-                print(f"Generated {result.get('count', 0)} embeddings")
+            elif 'inferred' in result:
+                question = result.get('question', 'N/A')
+                answer = result.get('answer', result.get('inferred', 'N/A'))
+                print(f"Q&A Generation Results:")
+                print(f"   Question: {question}")
+                print(f"   Answer: {answer}")
+                print(f"   Full response: {result.get('inferred', 'N/A')}")
+            elif 'modified_text' in result:
+                print(f"RAG-Powered Native Ad Insertion Results:")
+                print(f"   Selected Product: {result.get('selected_product', {}).get('name', 'Unknown')}")
+                print(f"   Similarity Score: {result.get('selected_product', {}).get('similarity_score', 0):.3f}")
+                print(f"   Original length: {result['insertion_details']['original_length']} chars")
+                print(f"   Modified length: {result['insertion_details']['modified_length']} chars")
+                print(f"   Insertion point: {result['insertion_details']['insertion_point']}")
+                print(f"   Reasoning: {result['insertion_details']['reasoning']}")
+                print(f"   Related products found: {len(result['related_products'])}")
+                print(f"\n Modified Text Preview:")
+                modified_preview = result['modified_text'][:1000] + "..." if len(result['modified_text']) > 1000 else result['modified_text']
+                print(f"   {modified_preview}")
+                if result['related_products']:
+                    print(f"\n All Related Products:")
+                    for prod in result['related_products'][:3]:
+                        print(f"   • {prod['name']} (similarity: {prod['similarity']:.3f})")
             else:
                 # For other responses, limit output length
                 response_str = json.dumps(result, indent=2)
@@ -64,82 +73,25 @@ def test_endpoint(name, method, endpoint, data=None):
         return None
 
 def main():
-    print("🚀 Starting Flask RAG Server Demo")
-    print("Make sure your server is running on localhost:8888")
-    
+    print("Starting Flask RAG Server Demo with Native Advertising")
+
     # 1. Health Check
     test_endpoint("Health Check", "GET", "/health")
     
-    # 2. Original Inference Test
+    # 2. Text Generation Test (using original parameters)
     test_endpoint(
         "Text Generation (Inference)", 
         "POST", 
-        "/infer",
-        {'prompt': 'You are a helpful assistant. \nQuestion:\nWhat is 2+2?.\nAnswer:\n'}
-    )
-    
-    # 3. Original Ad Insertion Test
-    test_endpoint(
-        "Native Ad Insertion", 
-        "POST", 
-        "/insert_native_ads",
-        {'text': 'This is some sample text content.'}
-    )
-    
-    # 4. Embedding Generation
-    test_endpoint(
-        "Single Text Embedding", 
-        "POST", 
-        "/embed",
+        "/infer_local",
         {
-            'text': 'VPN service with strong encryption',
-            'instruction': 'Represent this sentence for searching relevant passages:'
+            'question': 'What is 2+2?',
+            'max_tokens': 50
         }
     )
     
-    # 5. Batch Embedding Generation
-    test_endpoint(
-        "Batch Text Embeddings", 
-        "POST", 
-        "/embed_batch",
-        {
-            'texts': [
-                'VPN with strong security',
-                'Fast internet privacy tool',
-                'Secure browsing software'
-            ],
-            'instruction': 'Represent this sentence for searching relevant passages:'
-        }
-    )
-
-    # 6. Add a New Product
-    new_product_result = test_endpoint(
-        "Add New Product", 
-        "POST", 
-        "/products",
-        {
-            'name': 'ProtonVPN',
-            'category': 'VPN/Privacy',
-            'description': 'Swiss-based VPN service with end-to-end encryption, no-logs policy, and Secure Core servers for maximum privacy protection.'
-        }
-    )
-    
-    # 7. Add Duplicate Product (should fail/skip)
-    test_endpoint(
-        "Add Duplicate Product (should skip)", 
-        "POST", 
-        "/products",
-        {
-            'name': 'ProtonVPN',  # Same name as above
-            'category': 'VPN/Privacy',
-            'description': 'Duplicate entry test'
-        }
-    )
-    
-    # 9. Search Tests
+    # 3. Search Tests
     search_queries = [
-        'VPN with strong security features',
-        'privacy protection software',
+        'privacy protection software'
     ]
     
     for query in search_queries:
@@ -152,7 +104,25 @@ def main():
                 'top_k': 3
             }
         )
-        time.sleep(0.5)  # Small delay between searches
+        time.sleep(0.5)
     
+    # 4. Native Ad Insertion Tests (Main Feature!)    
+    ad_test_cases = [
+            ''''Online privacy has become a major concern for internet users worldwide. With increasing surveillance, data collection, and cyber threats, many people are looking for ways to protect their digital footprint. There are several approaches to maintaining privacy online, including using secure browsers, enabling two-factor authentication, and being cautious about the information you share on social media platforms. Cybersecurity experts recommend using multiple layers of protection.''',
+        
+            '''The digital landscape continues to evolve rapidly, bringing both opportunities and challenges. As we become more dependent on technology for work, entertainment, and communication, it's crucial to understand the importance of cybersecurity. Malware, ransomware, and phishing attacks are becoming increasingly sophisticated, targeting both individuals and businesses. Advanced threat detection systems are essential for protection.'''
+        ,
+    ]
+    
+    for i, test_case in enumerate(ad_test_cases, 1):
+        test_endpoint(
+            f"RAG Ad Insertion Test {i}", 
+            "POST", 
+            "/insert_native_ads",
+            {
+                'text': test_case,
+            }
+        )
+
 if __name__ == "__main__":
     main()

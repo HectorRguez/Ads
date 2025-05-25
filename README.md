@@ -79,16 +79,42 @@ hostname = 0.0.0.0
 port = 8888
 
 [model]
-path = /absolute/path/to/mistral/.gguf
+path = /data/hector/models/mistral-7b-gguf/mistral-7b-v0.1.Q4_K_M.gguf
 max_tokens = 2048
-gpu_device = 0
+gpu_device = 3
 
 [embedding]
-path = /absolute/path/to/stella
-gpu_device = 0
+path = /data/hector/models/stella-en-1.5B
+gpu_device = 2
 
 [data]
-csv_path = products.csv
+csv_path = dataset.txt
+
+[prompts]
+qa_template = <s>@@INST@@ You are a helpful assistant. Answer the question concisely and accurately.
+    Question: {question}
+    @@/INST@@
+
+ad_insertion_template = <s>@@INST@@ You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
+
+    Original Text: {original_text}
+
+    Advertisement Details:
+    - Company: {company_name}
+    - Category: {category}
+    - Description: {description}
+
+    Instructions:
+    1. Find the most appropriate location in the text to insert the ad
+    2. Write a natural transition that connects to the ad
+    3. Present the ad in a way that feels organic to the content
+    4. Ensure the ad does not disrupt the main message
+
+    Provide your response in this exact format:
+    MODIFIED_TEXT: your edited text with the ad integrated
+    INSERTION_POINT: describe where you inserted the ad
+    REASONING: brief explanation of why you chose that location
+    @@/INST@@
 ```
 
 ## Usage
@@ -117,12 +143,8 @@ The server will automatically:
 ### API Endpoints
 
 #### Text Generation
-- `POST /infer` - Generate text with Mistral
-- `POST /insert_native_ads` - Insert native advertisements
-
-#### Embeddings
-- `POST /embed` - Generate single embedding
-- `POST /embed_batch` - Generate multiple embeddings
+- `POST /infer_local` - Generate text locally with Mistral 7B.
+- `POST /insert_native_ads` - Insert native advertisements with Mistral 7B.
 
 #### RAG & Products
 - `GET /products` - List all products
@@ -150,7 +172,7 @@ curl -X POST http://localhost:8888/search \
 ```
 **Complete demo**
 ```bash
-python server_test.py
+python server_demo.py
 ```
 
 This tests all functionality including:
@@ -180,3 +202,14 @@ CREATE TABLE products (
     embedding BLOB NOT NULL
 );
 ```
+
+### Project Structure
+"""
+src/
+├── server.py              # Server setup and initialization
+├── server_demo.py         # Test all the APIs
+├── models.py              # Model loading and management
+├── rag.py                 # RAG functionality (embeddings, database, search)
+├── endpoints.py           # All API endpoints
+└── config.ini
+"""
