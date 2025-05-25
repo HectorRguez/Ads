@@ -139,6 +139,8 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             
             # Generate response using text generation
             generated_response = generate_text(text_model, ad_prompt, max_tokens)
+
+            print(f"[DEBUG] Generated response: {generated_response}")
             
             # Step 5: Parse the response
             modified_text = ""

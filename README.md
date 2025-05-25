@@ -93,14 +93,9 @@ qa_template = You are a helpful assistant. Answer the question concisely and acc
     Question: {question}
     Answer:
 
-ad_insertion_template = You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
+ad_insertion_template = Add this ad to the text naturally: {company_name} - {description}
 
-    Original Text: {original_text}
-
-    Advertisement Details:
-    - Company: {company_name}
-    - Category: {category}
-    - Description: {description}
+    {original_text}
 ```
 
 ## Usage
