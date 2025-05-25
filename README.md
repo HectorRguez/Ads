@@ -88,7 +88,7 @@ ad_insertion_template = path/to/template
 
 ### Data Format
 
-The CSV should be tab-separated with these columns, and it should be stored inside the `src/` directory:
+An example with common YouTube advertisements can be found [here](https://huggingface.co/datasets/HectorRguez/Common_yt_sponsors). The CSV should be tab-separated with these columns:
 
 | Name | Category | Description |
 |------|----------|-------------|
@@ -169,7 +169,6 @@ src/
 
 ### Reference datasets
 - [**True** benchmark]() **NOT USING YET**
-- [Products dataset](https://huggingface.co/datasets/HectorRguez/Common_yt_sponsors): Common YouTube sponsors.
 - [**WildChat** filtered dataset](https://huggingface.co/datasets/HectorRguez/wildchat-10k-filtered): Open source dataset of questions asked to OpenAI models. Representative of common LLM usage. 
     - Only questions and answers in *english*
     - Questions of less than *100 words* 
