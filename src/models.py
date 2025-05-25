@@ -44,7 +44,7 @@ def generate_text(model, prompt, max_tokens=100):
         temperature=0.7,
         top_p=0.9,
         repeat_penalty=1.2,
-        stop=["\n", "\n\n", "</s>", "Question:"]
+        stop=["</s>", "\nQuestion:", "\nAnswer:"]
     )
     
     if result and result['choices']:

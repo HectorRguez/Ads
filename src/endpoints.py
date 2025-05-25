@@ -32,11 +32,11 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             question_prompt = question_template.format(
                 question=question
             )
-
             result = generate_text(text_model, question_prompt, max_tokens)
             return jsonify({
+                "question": question,
+                "prompt": question_prompt,
                 "inferred": result,
-                "question": question
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500

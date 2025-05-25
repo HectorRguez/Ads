@@ -31,9 +31,11 @@ def test_endpoint(name, method, endpoint, data=None):
             elif 'inferred' in result:
                 question = result.get('question', 'N/A')
                 answer = result.get('inferred', 'N/A')
+                prompt = result.get('prompt', 'N/A')
                 print(f"Q&A Generation Results:")
                 print(f"   Question: {question}")
                 print(f"   Answer: {answer}")
+                print(f"   Prompt: {prompt}")
             elif 'modified_text' in result:
                 print(f"RAG-Powered Native Ad Insertion Results:")
                 print(f"   Selected Product: {result.get('selected_product', {}).get('name', 'Unknown')}")

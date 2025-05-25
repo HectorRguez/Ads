@@ -89,11 +89,11 @@ gpu_device = 0
 csv_path = products.csv
 
 [prompts]
-qa_template = <s>[INST] You are a helpful assistant. Answer the question concisely and accurately.
+qa_template = You are a helpful assistant. Answer the question concisely and accurately.
     Question: {question}
-    [/INST]
+    Answer:
 
-ad_insertion_template = <s>[INST] You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
+ad_insertion_template = You are an expert content editor. Your task is to seamlessly integrate a relevant advertisement into the given text while maintaining natural flow and readability.
 
     Original Text: {original_text}
 
@@ -101,18 +101,6 @@ ad_insertion_template = <s>[INST] You are an expert content editor. Your task is
     - Company: {company_name}
     - Category: {category}
     - Description: {description}
-
-    Instructions:
-    1. Find the most appropriate location in the text to insert the ad
-    2. Write a natural transition that connects to the ad
-    3. Present the ad in a way that feels organic to the content
-    4. Ensure the ad does not disrupt the main message
-
-    Provide your response in this exact format:
-    MODIFIED_TEXT: your edited text with the ad integrated
-    INSERTION_POINT: describe where you inserted the ad
-    REASONING: brief explanation of why you chose that location
-    [/INST]
 ```
 
 ## Usage
@@ -156,12 +144,10 @@ The server will automatically:
 ### Examples
 
 **Text generation:**
-
-TODO: This section is outdated.
 ```bash
-curl -X POST http://localhost:8888/infer \
+curl -X POST http://localhost:8888/infer_local \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "You are a helpful assistant. \nQuestion:\nWhat is 2+2?.\nAnswer:\n"}'
+  -d '{"question": "What is 2+2?"}'
 ```
 
 **Product search:**
