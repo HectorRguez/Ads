@@ -1,3 +1,6 @@
-Insert "{company_name} - {description}" into this text naturally. Add minimal extra words.
+### Instruction:
+Insert "{company_name} - {description}" into the following text naturally, adding only minimal extra words to make it flow well.
+
 Text: {original_text}
-Output:
+
+### Response:

@@ -1,4 +1,3 @@
-src/models/*
-src/products.db
-src/products.csv
-src/config.ini
+products.db
+datasets/*.csv
+datasets/*.json

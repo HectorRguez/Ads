@@ -10,7 +10,7 @@ from endpoints import register_endpoints
 def load_config():
     """Load configuration file"""
     config = configparser.ConfigParser()
-    config_path = 'config.ini'
+    config_path = 'src/config.ini'
     
     if not os.path.exists(config_path):
         print(f"Error: {config_path} not found")

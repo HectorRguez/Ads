@@ -1,3 +1,4 @@
-You are a helpful assistant. Answer the question concisely and accurately.
-Question: {question}
-Answer:
+### Instruction:
+{question}
+
+### Response:

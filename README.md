@@ -25,7 +25,7 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvi
 
 # Additional ML packages
 conda install -c conda-forge sentence-transformers
-pip install flasgger configparser
+pip install flasgger configparser datasets
 pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
 ```
 
@@ -68,7 +68,7 @@ hostname = 0.0.0.0
 port = 8888
 
 [model]
-path = models/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf
+path = models/mistral-7b-instruct-v0.3/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf
 max_tokens = 2048
 gpu_device = 0
 
@@ -77,7 +77,7 @@ path = models/stella-en-1.5B
 gpu_device = 0
 
 [data]
-csv_path = path/to/products
+csv_path = datasets/products.csv
 
 [prompts]
 qa_template_path = path/to/template
@@ -155,7 +155,7 @@ CREATE TABLE products (
 ```
 
 ### Project Structure
-"""
+```
 src/
 ├── server.py              # Server setup and initialization
 ├── server_demo.py         # Test all the APIs
@@ -163,5 +163,15 @@ src/
 ├── rag.py                 # RAG functionality (embeddings, database, search)
 ├── endpoints.py           # All API endpoints
 ├── prompts/               
+├── datasets/              # Download and add advertisements to wildchat dataset
 └── config.ini
-"""
+```
+
+### Reference datasets
+- [**True** benchmark]() **NOT USING YET**
+- [Products dataset](https://huggingface.co/datasets/HectorRguez/Common_yt_sponsors): Common YouTube sponsors.
+- [**WildChat** filtered dataset](https://huggingface.co/datasets/HectorRguez/wildchat-10k-filtered): Open source dataset of questions asked to OpenAI models. Representative of common LLM usage. 
+    - Only questions and answers in *english*
+    - Questions of less than *100 words* 
+    - Answers between *100 and 300 words*
+- [**WildChat** filtered dataset with ads](https://huggingface.co/datasets/HectorRguez/wildchat-1k-filtered-ads): Subset of the filtered dataset, generated with the `\insert_native_ad` endpoint. 
