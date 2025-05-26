@@ -173,7 +173,6 @@ def main():
             {
                 'prompt': prompt,
                 'text': test_content,
-                'max_tokens': 4096
             }
         )
         time.sleep(1)
@@ -187,11 +186,9 @@ def main():
     test_questions_with_ads = [
         {
             'question': 'What is cybersecurity and why is it important?',
-            'max_tokens': 4096
         },
         {
             'question': 'How can businesses protect themselves from cyber threats?',
-            'max_tokens': 4096
         }
     ]
     

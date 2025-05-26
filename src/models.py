@@ -1,4 +1,6 @@
 import torch
+import os
+import requests
 from llama_cpp import Llama, llama_cpp
 from sentence_transformers import SentenceTransformer
 
@@ -43,12 +45,12 @@ def load_models(config):
     
     return text_model, embedding_model
 
-def generate_text(model, prompt, max_tokens=100):
+def generate_text_local(model, prompt, max_tokens=8096):
     """Generate text using the loaded model"""
     result = model(
         prompt,
-        max_tokens=max_tokens,
         temperature=0.6,
+        max_tokens=max_tokens,
         top_p=0.5,
         repeat_penalty=1.1
     )
@@ -57,3 +59,46 @@ def generate_text(model, prompt, max_tokens=100):
         return result['choices'][0]['text'].strip()
     else:
         raise Exception("No result from model")
+    
+
+def generate_text_remote(prompt, model='deepseek-chat', temperature=0.7, max_tokens=8096):
+    """Generate text using DeepSeek API"""
+    api_key = os.getenv('DEEPSEEK_API_KEY')
+    if not api_key:
+        raise ValueError("DeepSeek API key not configured")
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': model,
+        'messages': [
+            {
+                'role': 'user',
+                'content': prompt
+            }
+        ],
+        'max_tokens': max_tokens,
+        'temperature': temperature
+    }
+    
+    response = requests.post(
+        'https://api.deepseek.com/v1/chat/completions',
+        headers=headers,
+        json=payload,
+        timeout=30
+    )
+    
+    if response.status_code != 200:
+        raise requests.exceptions.RequestException(f"DeepSeek API error: {response.status_code} - {response.text}")
+    
+    api_response = response.json()
+    
+    if 'choices' in api_response and len(api_response['choices']) > 0:
+        result = api_response['choices'][0]['message']['content']
+        usage = api_response.get('usage', {})
+        return result, usage
+    else:
+        raise ValueError("Unexpected API response format")

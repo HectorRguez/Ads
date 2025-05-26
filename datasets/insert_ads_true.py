@@ -27,13 +27,12 @@ class TRUEResponseGenerator:
         except Exception as e:
             raise Exception(f"Cannot connect to server at {server_url}: {e}")
     
-    def generate_response(self, question, max_tokens=300, with_ads=False):
+    def generate_response(self, question, with_ads=False):
         """Generate response from your model."""
         endpoint = "/infer_local_native_ads" if with_ads else "/infer_local"
         
         data = {
-            'question': question,
-            'max_tokens': max_tokens
+            'question': question
         }
         
         try:
@@ -92,7 +91,7 @@ class TRUEResponseGenerator:
             questions.append(question)
             
             # Generate response
-            response = self.generate_response(question, max_tokens=300, with_ads=with_ads)
+            response = self.generate_response(question, with_ads=with_ads)
             
             if response is not None:
                 responses.append(response)

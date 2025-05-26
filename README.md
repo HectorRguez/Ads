@@ -53,7 +53,7 @@ port = 8888
 
 [model]
 path = models/mistral-7b-instruct-v0.3/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf
-max_tokens = 2048
+max_tokens = 8096
 gpu_device = 0
 
 [embedding]

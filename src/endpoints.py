@@ -1,8 +1,5 @@
 from flask import request, jsonify
-from models import generate_text
-from datetime import datetime
-import os
-import requests
+from models import generate_text_local, generate_text_remote
 
 def load_template(config, template_key):
     """Load a template file from config"""
@@ -10,53 +7,7 @@ def load_template(config, template_key):
     with open(template_path, 'r', encoding='utf-8') as f:
         return f.read()
 
-def generate_text_local(text_model, prompt, max_tokens):
-    """Generate text using local model"""
-    return generate_text(text_model, prompt, max_tokens)
-
-def generate_text_remote(prompt, max_tokens, model='deepseek-chat', temperature=0.7):
-    """Generate text using DeepSeek API"""
-    api_key = os.getenv('DEEPSEEK_API_KEY')
-    if not api_key:
-        raise ValueError("DeepSeek API key not configured")
-    
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        'model': model,
-        'messages': [
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ],
-        'max_tokens': max_tokens,
-        'temperature': temperature
-    }
-    
-    response = requests.post(
-        'https://api.deepseek.com/v1/chat/completions',
-        headers=headers,
-        json=payload,
-        timeout=30
-    )
-    
-    if response.status_code != 200:
-        raise requests.exceptions.RequestException(f"DeepSeek API error: {response.status_code} - {response.text}")
-    
-    api_response = response.json()
-    
-    if 'choices' in api_response and len(api_response['choices']) > 0:
-        result = api_response['choices'][0]['message']['content']
-        usage = api_response.get('usage', {})
-        return result, usage
-    else:
-        raise ValueError("Unexpected API response format")
-
-def get_related_products_and_ad(rag_system, config, prompt, text_content, max_tokens, text_generator_func):
+def get_related_products_and_ad(rag_system, config, prompt, text_content, text_generator_func):
     """
     Common function to get related products and generate native ad insertion
     
@@ -65,7 +16,6 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, max_to
         config: Configuration object
         prompt: Text prompt that was used to generate text_content
         text_content: Text content to analyze for product matching
-        max_tokens: Maximum tokens for ad generation
         text_generator_func: Function to generate text (local or remote)
     
     Returns:
@@ -105,7 +55,7 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, max_to
     )
     
     # Step 5: Generate ad text
-    generated_response, usage_info = text_generator_func(ad_prompt, max_tokens)
+    generated_response, usage_info = text_generator_func(ad_prompt)
     
     # Step 6: Format results - FIXED to include URL
     selected_product_info = {
@@ -147,7 +97,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         """Text generation endpoint using local model"""
         data = request.get_json()
         question = data.get('question')
-        max_tokens = data.get('max_tokens', 100)
         
         if not question:
             return jsonify({"error": "Missing 'question'"}), 400
@@ -155,7 +104,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         try:
             question_template = load_template(config, 'qa_template_path')
             question_prompt = question_template.format(question=question)
-            result = generate_text_local(text_model, question_prompt, max_tokens)
+            result = generate_text_local(text_model, question_prompt)
             
             return jsonify({
                 "question": question,
@@ -170,7 +119,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         """Text generation endpoint using DeepSeek API"""
         data = request.get_json()
         question = data.get('question')
-        max_tokens = data.get('max_tokens', 100)
         model = data.get('model', 'deepseek-chat')
         temperature = data.get('temperature', 0.7)
         
@@ -180,7 +128,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         try:
             question_template = load_template(config, 'qa_template_path')
             question_prompt = question_template.format(question=question)
-            result, usage = generate_text_remote(question_prompt, max_tokens, model, temperature)
+            result, usage = generate_text_remote(question_prompt, model, temperature)
             
             return jsonify({
                 "question": question,
@@ -197,8 +145,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         """Text generation with native ads using local model"""
         data = request.get_json()
         question = data.get('question')
-        max_tokens = data.get('max_tokens', 100)
-        ad_max_tokens = data.get('ad_max_tokens', 300)
         
         if not question:
             return jsonify({"error": "Missing 'question'"}), 400
@@ -207,15 +153,15 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             # Step 1: Generate answer to question
             question_template = load_template(config, 'qa_template_path')
             question_prompt = question_template.format(question=question)
-            answer = generate_text_local(text_model, question_prompt, max_tokens)
+            answer = generate_text_local(text_model, question_prompt)
             
             # Step 2: Generate native ads based on the answer
-            def local_text_generator(prompt, tokens):
-                return generate_text_local(text_model, prompt, tokens), {}
+            def local_text_generator(prompt):
+                return generate_text_local(text_model, prompt), {}
             
             # FIXED: Correct parameter order
             ad_text, selected_product, related_products, _ = get_related_products_and_ad(
-                rag_system, config, question, answer, ad_max_tokens, local_text_generator
+                rag_system, config, question, answer, local_text_generator
             )
             
             return jsonify({
@@ -233,8 +179,6 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         """Text generation with native ads using DeepSeek API"""
         data = request.get_json()
         question = data.get('question')
-        max_tokens = data.get('max_tokens', 100)
-        ad_max_tokens = data.get('ad_max_tokens', 300)
         model = data.get('model', 'deepseek-chat')
         temperature = data.get('temperature', 0.7)
         
@@ -245,15 +189,15 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             # Step 1: Generate answer to question
             question_template = load_template(config, 'qa_template_path')
             question_prompt = question_template.format(question=question)
-            answer, usage = generate_text_remote(question_prompt, max_tokens, model, temperature)
+            answer, usage = generate_text_remote(question_prompt, model, temperature)
             
             # Step 2: Generate native ads based on the answer
-            def remote_text_generator(prompt, tokens):
-                return generate_text_remote(prompt, tokens, model, temperature)
+            def remote_text_generator(prompt):
+                return generate_text_remote(prompt, model, temperature)
             
             # FIXED: Correct parameter order
             ad_text, selected_product, related_products, ad_usage = get_related_products_and_ad(
-                rag_system, config, question, answer, ad_max_tokens, remote_text_generator
+                rag_system, config, question, answer, remote_text_generator
             )
             
             # Combine usage statistics
@@ -342,18 +286,17 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         data = request.get_json()
         original_prompt = data.get('prompt')
         original_text = data.get('text')
-        max_tokens = data.get('max_tokens', 300)
         
         if not original_text:
             return jsonify({"error": "Missing required field: text"}), 400
         
         try:
-            def local_text_generator(prompt, tokens):
-                return generate_text_local(text_model, prompt, tokens), {}
+            def local_text_generator(prompt):
+                return generate_text_local(text_model, prompt), {}
             
             # FIXED: Correct parameter order
             generated_response, selected_product, related_products, _ = get_related_products_and_ad(
-                rag_system, config, original_prompt, original_text, max_tokens, local_text_generator
+                rag_system, config, original_prompt, original_text, local_text_generator
             )
             
             return jsonify({
