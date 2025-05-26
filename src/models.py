@@ -48,9 +48,9 @@ def generate_text(model, prompt, max_tokens=100):
     result = model(
         prompt,
         max_tokens=max_tokens,
-        temperature=0.7,
-        top_p=0.9,
-        repeat_penalty=1.2
+        temperature=0.6,
+        top_p=0.5,
+        repeat_penalty=1.1
     )
     
     if result and result['choices']:

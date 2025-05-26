@@ -56,13 +56,14 @@ def generate_text_remote(prompt, max_tokens, model='deepseek-chat', temperature=
     else:
         raise ValueError("Unexpected API response format")
 
-def get_related_products_and_ad(rag_system, config, text_content, max_tokens, text_generator_func):
+def get_related_products_and_ad(rag_system, config, prompt, text_content, max_tokens, text_generator_func):
     """
     Common function to get related products and generate native ad insertion
     
     Args:
         rag_system: RAG system instance
         config: Configuration object
+        prompt: Text prompt that was used to generate text_content
         text_content: Text content to analyze for product matching
         max_tokens: Maximum tokens for ad generation
         text_generator_func: Function to generate text (local or remote)
@@ -82,14 +83,26 @@ def get_related_products_and_ad(rag_system, config, text_content, max_tokens, te
     category = selected_product[1]
     description = selected_product[2]
     similarity_score = selected_product[3]
+
+    # TODO: Add the product link retrieval logic here
+    product_link = None
     
     # Step 3: Load ad insertion template
-    ad_template = load_template(config, 'ad_insertion_template_path')
+    if product_link:
+        ad_template_path = config.get('prompts', 'ad_with_url_insertion_template_path')
+        with open(ad_template_path, 'r', encoding='utf-8') as f:
+            ad_template = f.read()
+    else:
+        ad_template_path = config.get('prompts', 'ad_without_url_insertion_template_path')
+        with open(ad_template_path, 'r', encoding='utf-8') as f:
+            ad_template = f.read()
     
     # Step 4: Create prompt for ad insertion
     ad_prompt = ad_template.format(
+        original_prompt=prompt,
         original_text=text_content,
         company_name=company_name,
+        product_link=product_link,
         category=category,
         description=description
     )
@@ -323,6 +336,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
     def insert_native_ads():
         """Insert native ads into text using RAG-selected products"""
         data = request.get_json()
+        original_prompt = data.get('prompt')
         original_text = data.get('text')
         max_tokens = data.get('max_tokens', 300)
         
@@ -334,7 +348,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
                 return generate_text_local(text_model, prompt, tokens), {}
             
             generated_response, selected_product, related_products, _ = get_related_products_and_ad(
-                rag_system, config, original_text, max_tokens, local_text_generator
+                rag_system, config, original_prompt, original_text, max_tokens, local_text_generator
             )
             
             return jsonify({

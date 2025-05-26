@@ -65,7 +65,8 @@ csv_path = datasets/products.csv
 
 [prompts]
 qa_template_path = path/to/template
-ad_insertion_template = path/to/template
+ad_with_url_insertion_template_path = path/to/template
+ad_without_url_insertion_template_path = path/to/template
 ```
 
 Create `.env`: and save it in the `Ads/` directory:
