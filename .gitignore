@@ -4,3 +4,4 @@ datasets/*.json
 .env
 *.env
 config.ini
+src/__pycache__
