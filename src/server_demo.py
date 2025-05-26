@@ -186,10 +186,5 @@ def main():
         
         time.sleep(2)
     
-    print(f"\n{'='*80}")
-    print("✅ Demo completed! The main feature showcases Q&A with integrated native ads.")
-    print("This demonstrates how answers can be enhanced with relevant product recommendations.")
-    print(f"{'='*80}")
-
 if __name__ == "__main__":
     main()
