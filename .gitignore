@@ -1,3 +1,6 @@
 products.db
 datasets/*.csv
 datasets/*.json
+.env
+*.env
+config.ini

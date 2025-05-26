@@ -44,7 +44,7 @@ source download.sh
 
 ### 3. Configuration
 
-Create `config.ini` and save it in the `src` directory:
+Create `config.ini` and save it in the `Ads/` directory:
 
 ```ini
 [server]
@@ -67,6 +67,12 @@ csv_path = datasets/products.csv
 qa_template_path = path/to/template
 ad_insertion_template = path/to/template
 ```
+
+Create `.env`: and save it in the `Ads/` directory:
+```bash
+DEEPSEEK_API_KEY=your_actual_api_key_here
+```
+
 
 ## Usage
 

@@ -1,6 +1,8 @@
 from flask import request, jsonify
 from models import generate_text
 from datetime import datetime
+import os
+import requests
 
 def register_endpoints(app, text_model, embedding_model, rag_system, config):
     """Register all API endpoints"""
@@ -19,7 +21,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
     
     @app.route('/infer_local', methods=['POST'])
     def infer_local():
-        """Text generation endpoint"""
+        """Text generation endpoint using local model"""
         data = request.get_json()
         question = data.get('question')
         max_tokens = data.get('max_tokens', 100)
@@ -43,6 +45,86 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+    
+    @app.route('/infer_remote', methods=['POST'])
+    def infer_remote():
+        """Text generation endpoint using DeepSeek API"""
+        data = request.get_json()
+        question = data.get('question')
+        max_tokens = data.get('max_tokens', 100)
+        model = data.get('model', 'deepseek-chat')  # Default DeepSeek model
+        temperature = data.get('temperature', 0.7)
+        
+        if not question:
+            return jsonify({"error": "Missing 'question'"}), 400
+        
+        # Get API key from environment
+        api_key = os.getenv('DEEPSEEK_API_KEY')
+        if not api_key:
+            return jsonify({"error": "DeepSeek API key not configured"}), 500
+        
+        try:
+            # Load question template
+            question_template_path = config.get('prompts', 'qa_template_path')
+            with open(question_template_path, 'r', encoding='utf-8') as f:
+                question_template = f.read()
+
+            question_prompt = question_template.format(
+                question=question
+            )
+            
+            # Prepare DeepSeek API request
+            headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            payload = {
+                'model': model,
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': question_prompt
+                    }
+                ],
+                'max_tokens': max_tokens,
+                'temperature': temperature
+            }
+            
+            # Make API call to DeepSeek
+            response = requests.post(
+                'https://api.deepseek.com/v3/chat/completions',
+                headers=headers,
+                json=payload,
+                timeout=30  # 30 second timeout
+            )
+            
+            if response.status_code != 200:
+                return jsonify({
+                    "error": f"DeepSeek API error: {response.status_code}",
+                    "details": response.text
+                }), 500
+            
+            api_response = response.json()
+            
+            # Extract the generated text
+            if 'choices' in api_response and len(api_response['choices']) > 0:
+                result = api_response['choices'][0]['message']['content']
+            else:
+                return jsonify({"error": "Unexpected API response format"}), 500
+            
+            return jsonify({
+                "question": question,
+                "prompt": question_prompt,
+                "inferred": result,
+                "model": model,
+                "usage": api_response.get('usage', {})
+            })
+            
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"Network error: {str(e)}"}), 500
+        except Exception as e:
+            return jsonify({"error": f"DeepSeek API call failed: {str(e)}"}), 500
     
     @app.route('/search', methods=['POST'])
     def search():

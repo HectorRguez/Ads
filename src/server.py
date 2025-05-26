@@ -7,16 +7,22 @@ from models import load_models
 from rag import init_rag_system
 from endpoints import register_endpoints
 
+from dotenv import load_dotenv
+
 def load_config():
     """Load configuration file"""
     config = configparser.ConfigParser()
-    config_path = 'src/config.ini'
+    config_path = 'config.ini'
     
     if not os.path.exists(config_path):
         print(f"Error: {config_path} not found")
         exit(1)
     
     config.read(config_path)
+
+    # Load .env file
+    load_dotenv('.env')
+
     print("✅ Configuration loaded")
     return config
 
