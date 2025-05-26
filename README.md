@@ -27,6 +27,7 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvi
 conda install -c conda-forge sentence-transformers
 pip install flasgger configparser datasets
 pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+pip install 'accelerate>=0.26.0' bitsandbytes
 ```
 
 The server uses `llama-cpp-python` to serve models in the GGUF format. You can install this library via `conda`, but building it from source may be necessary to enable CUDA support.

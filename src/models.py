@@ -20,17 +20,24 @@ def load_models(config):
         verbose=False
     )
     print("✅ Text model loaded")
+
     
-    # Load embedding model (Stella)
+    # Load embedding model (Stella) witn quantization
     print("Loading embedding model...")
     embedding_path = config.get('embedding', 'path')
     embedding_gpu = config.getint('embedding', 'gpu_device', fallback=0)
     
     device = f'cuda:{embedding_gpu}' if torch.cuda.is_available() else 'cpu'
+    model_kwargs = { 
+        'trust_remote_code': True,
+        'load_in_4bit': True,
+        'torch_dtype': torch.float16,
+    }
     embedding_model = SentenceTransformer(
         embedding_path,
         device=device,
-        trust_remote_code=True
+        trust_remote_code=True,
+        model_kwargs=model_kwargs
     )
     print("✅ Embedding model loaded")
     
