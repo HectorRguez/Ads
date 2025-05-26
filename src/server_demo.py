@@ -45,32 +45,43 @@ def test_endpoint(name, method, endpoint, data=None):
             result = response.json()
             print(f"✅ Success! Status Code: {response.status_code}")
             
-            # Handle Q&A results with highlighting
+            # Handle Q&A results (basic inference)
             if 'inferred' in result:
                 question = result.get('question', 'N/A')
                 answer = result.get('inferred', 'N/A')
-                
-                # Show model info if available (for remote inference)
-                if 'model' in result:
-                    print(f"Model: {result['model']}")
-                if 'usage' in result and result['usage']:
-                    usage = result['usage']
-                    print(f"Token Usage: {usage}")
                 
                 print("\nQ&A Generation Results:")
                 print(print_boxed_text("QUESTION", question))
                 print()
                 print(print_boxed_text("ANSWER", answer))
             
-            # Handle native ad insertion with highlighting
-            elif 'modified_text' in result:                
+            # Handle Q&A with native ads (combined inference)
+            elif 'answer_with_ads' in result:
+                question = result.get('question', 'N/A')
+                original_answer = result.get('answer', 'N/A')
+                answer_with_ads = result.get('answer_with_ads', 'N/A')
+                
+                print("\nQ&A with Native Ads Results:")
+                print(print_boxed_text("QUESTION", question))
+                print()
+                print(print_boxed_text("ORIGINAL ANSWER", original_answer))
+                print()
+                print(print_boxed_text("ANSWER WITH ADS", answer_with_ads))
+                
+                if result.get('related_products'):
+                    print(f"\nRelated Products Used:")
+                    for prod in result['related_products'][:3]:
+                        print(f"   - {prod['name']} (similarity: {prod['similarity']:.3f})")
+            
+            # Handle text with native ads (insert_native_ads)
+            elif 'text_with_ads' in result:
                 original_text = data.get('text', 'Original text not available') if data else 'Original text not available'
-                modified_text = result['modified_text']
+                text_with_ads = result['text_with_ads']
                 
                 print(print_boxed_text("ORIGINAL TEXT", original_text))
-                print(print_boxed_text("MODIFIED TEXT", modified_text))
+                print(print_boxed_text("TEXT WITH ADS", text_with_ads))
 
-                if result['related_products']:
+                if result.get('related_products'):
                     print(f"\nAll Related Products:")
                     for prod in result['related_products'][:3]:
                         print(f"   - {prod['name']} (similarity: {prod['similarity']:.3f})")
@@ -108,47 +119,14 @@ def test_health_check():
         print(f"❌ Health check exception: {e}")
 
 def main():
-    print("Starting Flask RAG Server Demo with Local and Remote Inference")
+    print("Starting Flask RAG Server Demo with Native Advertising")
     
     # Health check first
     test_health_check()
     
-    # Test questions for both local and remote inference
-    test_questions = [
-        {
-            'question': 'What is machine learning?',
-            'max_tokens': 1000
-        }
-    ]
-    
-    # Test both local and remote inference for each question
-    for i, test_data in enumerate(test_questions, 1):
-        print(f"\n{'#'*80}")
-        print(f"INFERENCE TEST SET {i}")
-        print(f"{'#'*80}")
-        
-        # Test local inference
-        local_result = test_endpoint(
-            f"Local Text Generation {i}", 
-            "POST", 
-            "/infer_local",
-            test_data
-        )
-        
-        # Add a small delay between requests
-        time.sleep(1)
-        
-        # Test remote inference
-        remote_result = test_endpoint(
-            f"Remote Text Generation {i}", 
-            "POST", 
-            "/infer_remote",
-            test_data
-        )
-    
-    # Native Ad Insertion Tests  
+    # Test native ad insertion with existing text
     print(f"\n{'#'*80}")
-    print("NATIVE AD INSERTION TESTS")
+    print("NATIVE AD INSERTION TESTS (existing text)")
     print(f"{'#'*80}")
     
     ad_test_cases = [
@@ -159,7 +137,7 @@ def main():
     
     for i, test_case in enumerate(ad_test_cases, 1):
         test_endpoint(
-            f"RAG Ad Insertion Test {i}", 
+            f"Text Ad Insertion Test {i}", 
             "POST", 
             "/insert_native_ads",
             {
@@ -168,6 +146,50 @@ def main():
             }
         )
         time.sleep(1)
+    
+    # Main feature: Combined Q&A with Native Ads (most representative)
+    print(f"\n{'#'*80}")
+    print("MAIN FEATURE: Q&A WITH NATIVE ADS")
+    print(f"{'#'*80}")
+    
+    # Test questions for combined inference with ads
+    test_questions_with_ads = [
+        {
+            'question': 'What is cybersecurity and why is it important?',
+            'max_tokens': 500
+        },
+        {
+            'question': 'How can businesses protect themselves from cyber threats?',
+            'max_tokens': 500
+        }
+    ]
+    
+    # Test both local and remote inference with ads for each question
+    for i, test_data in enumerate(test_questions_with_ads, 1):        
+        # Test local inference with ads
+        local_result = test_endpoint(
+            f"Local Q&A with Native Ads {i}", 
+            "POST", 
+            "/infer_local_native_ads",
+            test_data
+        )
+        
+        time.sleep(2)
+        
+        # Test remote inference with ads
+        remote_result = test_endpoint(
+            f"Remote Q&A with Native Ads {i}", 
+            "POST", 
+            "/infer_remote_native_ads",
+            test_data
+        )
+        
+        time.sleep(2)
+    
+    print(f"\n{'='*80}")
+    print("✅ Demo completed! The main feature showcases Q&A with integrated native ads.")
+    print("This demonstrates how answers can be enhanced with relevant product recommendations.")
+    print(f"{'='*80}")
 
 if __name__ == "__main__":
     main()
