@@ -17,8 +17,8 @@ download_retry() {
 echo "Starting downloads..."
 
 # Mistral 7B Instruct v0.3
-download_retry "MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF" \
-    "Mistral-7B-Instruct-v0.3.Q4_K_M.gguf" \
+download_retry "bartowski/Mistral-7B-Instruct-v0.3-GGUF" \
+    "Mistral-7B-Instruct-v0.3-Q8_0.gguf" \
     --local-dir "./mistral-7b-instruct-v0.3"
 
 # Stella EN 1.5B v5

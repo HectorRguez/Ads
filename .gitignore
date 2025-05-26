@@ -1,7 +1,12 @@
-products.db
 datasets/*.csv
 datasets/*.json
-.env
-*.env
-config.ini
+
 src/__pycache__
+
+.env
+config.ini
+products.db
+
+**/*.gguf
+
+*.env
