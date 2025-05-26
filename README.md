@@ -64,9 +64,9 @@ gpu_device = 0
 csv_path = datasets/products.csv
 
 [prompts]
-qa_template_path = path/to/template
-ad_with_url_insertion_template_path = path/to/template
-ad_without_url_insertion_template_path = path/to/template
+qa_template_path = prompts/minimal_qa_template.txt
+ad_with_url_insertion_template_path = prompts/ad_with_url_template.txt
+ad_without_url_insertion_template_path = prompts/ad_without_url_template_path
 ```
 
 Create `.env`: and save it in the `Ads/` directory:
