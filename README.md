@@ -9,34 +9,17 @@ This repository provides a Flask-based server for running Large Language Models 
 
 ## Installation
 
-### 1. Create conda environment
+### 1. Create conda environment and install dependencies
 ```bash
-conda create -n llm-server python=3.10
+conda env create -f environment.yml
 conda activate llm-server
 ```
-
-### 2. Install dependencies
-```bash
-# Core packages
-conda install -c conda-forge flask numpy sqlite requests
-
-# PyTorch (choose based on your CUDA version)
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-
-# Additional ML packages
-conda install -c conda-forge sentence-transformers
-pip install flasgger configparser datasets
-pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-pip install 'accelerate>=0.26.0' bitsandbytes
-```
-
-The server uses `llama-cpp-python` to serve models in the GGUF format. You can install this library via `conda`, but building it from source may be necessary to enable CUDA support.
-
-To build using `pip`, remember to activate your `conda` environment first, then set the following environment variables:
+The server uses `llama-cpp-python` to serve models in the GGUF format. Building it from source may be necessary to enable CUDA support.
 
 ```bash
 export CMAKE_ARGS="-DGGML_CUDA=on"
 export FORCE_CMAKE=1
+pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
 ```
 
 This will take a significant amount of time, as it builds the library from source.
@@ -47,7 +30,7 @@ This will take a significant amount of time, as it builds the library from sourc
 export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 ```
 
-### 3. Download models
+### 2. Download models
 The fastest way to download the models is to use the `huggingface-hub`. 
 ```bash
 pip install huggingface-hub
@@ -59,7 +42,7 @@ cd models
 source download.sh
 ```
 
-### 4. Configuration
+### 3. Configuration
 
 Create `config.ini` and save it in the `src` directory:
 
