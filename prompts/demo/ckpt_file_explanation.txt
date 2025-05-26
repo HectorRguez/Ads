@@ -1,0 +1,11 @@
+A .ckpt file, short for "checkpoint" file, is used in machine learning to store the current state of a trained model. It typically contains the following information:
+
+1. Model architecture: The structure of the neural network, such as the number and types of layers, along with their configurations.
+
+2. Model weights: The learned parameters or weights of the model at a specific point during training.
+
+3. Optimizer state: The state of the optimizer, including details like learning rate, momentum, and other hyperparameters, at the time of saving the checkpoint.
+
+4. Training configuration: The training settings, such as the batch size, loss function, and number of epochs.
+
+Checkpoint files are essential for resuming training from a specific point, allowing for more efficient retraining and fine-tuning of models, and they are also useful for saving and sharing the best performing models during the training process. The main goal of checkpointing is to enable recovery from interruptions, prevent loss of progress, and facilitate model evaluation at different stages during training.

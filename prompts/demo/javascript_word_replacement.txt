@@ -1,0 +1,32 @@
+You can write a simple JavaScript script like this to replace words in an HTML document using a table (in this case, an object that maps the words to their replacements).
+
+1. Include the following script inside a `<script>` tag in your HTML file:
+
+```javascript
+document.addEventListener("DOMContentLoaded", function() {
+  const replacements = {
+    "word1": "replacement1",
+    "word2": "replacement2",
+    // Add more words and replacements here
+  };
+
+  function replaceWords(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      Object.keys(replacements).forEach((word) => {
+        const regex = new RegExp('\\b' + word + '\\b', 'g');
+        node.textContent = node.textContent.replace(regex, replacements[word]);
+      });
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      node.childNodes.forEach(replaceWords);
+    }
+  }
+
+  replaceWords(document.body);
+});
+```
+
+2. Replace "word1", "replacement1", "word2", "replacement2" in the `replacements` object with the words you want to replace and their respective replacements.
+
+3. When you load the HTML document in the browser, the script replaces all occurrences of the specified words with their replacements.
+
+Note: This script will only run if the page is loaded in a web browser. To test it, you can create an HTML file with some text containing the words you want to replace, and then run the file in the browser.

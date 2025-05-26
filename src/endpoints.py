@@ -73,22 +73,19 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, max_to
     """
     # Step 1: Search for related products
     related_products = rag_system.search_products(text_content, top_k=3)
-    
     if not related_products:
         raise ValueError("No products found in database for ad insertion")
-    
+
     # Step 2: Select the best matching product
     selected_product = related_products[0]
     company_name = selected_product[0]
     category = selected_product[1]
-    description = selected_product[2]
-    similarity_score = selected_product[3]
+    product_link = selected_product[2]
+    description = selected_product[3]
+    similarity_score = selected_product[4]
 
-    # TODO: Add the product link retrieval logic here
-    product_link = None
-    
-    # Step 3: Load ad insertion template
-    if product_link:
+    # Step 3: Load ad insertion template based on whether URL exists
+    if product_link and product_link.strip():  # Check if URL exists and is not empty
         ad_template_path = config.get('prompts', 'ad_with_url_insertion_template_path')
         with open(ad_template_path, 'r', encoding='utf-8') as f:
             ad_template = f.read()
@@ -96,7 +93,7 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, max_to
         ad_template_path = config.get('prompts', 'ad_without_url_insertion_template_path')
         with open(ad_template_path, 'r', encoding='utf-8') as f:
             ad_template = f.read()
-    
+
     # Step 4: Create prompt for ad insertion
     ad_prompt = ad_template.format(
         original_prompt=prompt,
@@ -110,20 +107,23 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, max_to
     # Step 5: Generate ad text
     generated_response, usage_info = text_generator_func(ad_prompt, max_tokens)
     
-    # Step 6: Format results
+    # Step 6: Format results - FIXED to include URL
     selected_product_info = {
         "name": company_name,
         "category": category,
+        "url": product_link,           # ADD URL here
         "description": description,
         "similarity_score": float(similarity_score)
     }
     
+    # FIXED: Update unpacking to handle 5 elements (name, category, url, description, similarity)
     related_products_info = [{
         "name": name,
         "category": cat,
+        "url": url,                    # ADD URL here
         "description": desc,
         "similarity": float(sim)
-    } for name, cat, desc, sim in related_products]
+    } for name, cat, url, desc, sim in related_products]  # ← Fixed unpacking!
     
     return generated_response, selected_product_info, related_products_info, usage_info
 
@@ -213,8 +213,9 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             def local_text_generator(prompt, tokens):
                 return generate_text_local(text_model, prompt, tokens), {}
             
+            # FIXED: Correct parameter order
             ad_text, selected_product, related_products, _ = get_related_products_and_ad(
-                rag_system, config, answer, ad_max_tokens, local_text_generator
+                rag_system, config, question, answer, ad_max_tokens, local_text_generator
             )
             
             return jsonify({
@@ -226,7 +227,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    
+
     @app.route('/infer_remote_native_ads', methods=['POST'])
     def infer_remote_native_ads():
         """Text generation with native ads using DeepSeek API"""
@@ -250,8 +251,9 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             def remote_text_generator(prompt, tokens):
                 return generate_text_remote(prompt, tokens, model, temperature)
             
+            # FIXED: Correct parameter order
             ad_text, selected_product, related_products, ad_usage = get_related_products_and_ad(
-                rag_system, config, answer, ad_max_tokens, remote_text_generator
+                rag_system, config, question, answer, ad_max_tokens, remote_text_generator
             )
             
             # Combine usage statistics
@@ -270,7 +272,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    
+        
     @app.route('/search', methods=['POST'])
     def search():
         """Product search endpoint"""
@@ -286,14 +288,15 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             formatted_results = [{
                 "name": name,
                 "category": category,
+                "url": url,                    
                 "description": description,
                 "similarity": float(similarity)
-            } for name, category, description, similarity in results]
+            } for name, category, url, description, similarity in results]
             
             return jsonify({"results": formatted_results})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    
+        
     @app.route('/products', methods=['GET'])
     def get_products():
         """Get all products"""
@@ -309,20 +312,21 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
         data = request.get_json()
         name = data.get('name')
         category = data.get('category')
+        url = data.get('url', '') 
         description = data.get('description')
         
         if not all([name, category, description]):
             return jsonify({"error": "Missing required fields"}), 400
         
         try:
-            success = rag_system.add_product(name, category, description)
+            success = rag_system.add_product(name, category, url, description)
             if success:
                 return jsonify({"message": f"Product '{name}' added successfully"})
             else:
                 return jsonify({"message": f"Product '{name}' already exists"}), 409
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    
+        
     @app.route('/products/<int:product_id>', methods=['DELETE'])
     def delete_product(product_id):
         """Delete product by ID"""
@@ -347,6 +351,7 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
             def local_text_generator(prompt, tokens):
                 return generate_text_local(text_model, prompt, tokens), {}
             
+            # FIXED: Correct parameter order
             generated_response, selected_product, related_products, _ = get_related_products_and_ad(
                 rag_system, config, original_prompt, original_text, max_tokens, local_text_generator
             )
