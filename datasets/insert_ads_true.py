@@ -17,6 +17,9 @@ class TRUEResponseGenerator:
         self.server_url = server_url
         self.headers = {'Content-Type': 'application/json'}
         
+        # Simple limit: ~8000 tokens * 4 chars/token = 32,000 characters
+        self.max_input_chars = 32000
+        
         # Test server connection
         try:
             response = requests.get(f"{server_url}/health")
@@ -27,8 +30,30 @@ class TRUEResponseGenerator:
         except Exception as e:
             raise Exception(f"Cannot connect to server at {server_url}: {e}")
     
+    def truncate_if_needed(self, text):
+        """
+        Simple truncation if text is too long.
+        
+        Returns:
+            tuple: (truncated_text, was_truncated)
+        """
+        if len(text) <= self.max_input_chars:
+            return text, False
+        
+        # Truncate and add indicator
+        truncation_indicator = "\n\n[... truncated due to length ...]"
+        safe_length = self.max_input_chars - len(truncation_indicator)
+        truncated = text[:safe_length] + truncation_indicator
+        
+        print(f"⚠️  WARNING: Input truncated ({len(text):,} → {len(truncated):,} characters)")
+        
+        return truncated, True
+    
     def generate_response(self, question, with_ads=False):
         """Generate response from your model."""
+        # Truncate question if needed
+        question, was_truncated = self.truncate_if_needed(question)
+        
         endpoint = "/infer_local_native_ads" if with_ads else "/infer_local"
         
         data = {
@@ -40,16 +65,18 @@ class TRUEResponseGenerator:
                 f"{self.server_url}{endpoint}", 
                 headers=self.headers, 
                 json=data,
-                timeout=30  # 30 second timeout
+                timeout=60  # Increased timeout for longer responses
             )
             
             if response.status_code == 200:
                 result = response.json()
                 
                 if with_ads:
-                    return result.get('answer_with_ads', result.get('inferred', ''))
+                    model_response = result.get('answer_with_ads', result.get('inferred', ''))
                 else:
-                    return result.get('inferred', result.get('answer', ''))
+                    model_response = result.get('inferred', result.get('answer', ''))
+                
+                return model_response
             else:
                 print(f"❌ Server error {response.status_code}: {response.text}")
                 return None
@@ -228,91 +255,87 @@ class TRUEResponseGenerator:
         Each dataset has a specific task that the original text generation model was 
         performing. We replicate that task to generate comparable text from your model.
         """
-        # Truncate grounding text to avoid token limits
-        max_context_length = 800
-        truncated_grounding = grounding[:max_context_length]
-        if len(grounding) > max_context_length:
-            truncated_grounding += "..."
-        
         dataset_lower = dataset_name.lower()
         
         # SUMMARIZATION DATASETS
         if 'summeval' in dataset_lower:
             # SummEval: CNN/DailyMail article summarization
             # Original task: Generate a summary of a news article
-            return f"Please write a concise summary of the following news article:\n\n{truncated_grounding}"
+            question = f"Please write a concise summary of the following news article:\n\n{grounding}"
             
         elif 'qags_cnndm' in dataset_lower:
             # QAGS CNN/DM: Question-answering based summarization evaluation
             # Original task: Generate answers based on article content
-            return f"Based on the following news article, please provide the key information and main points:\n\n{truncated_grounding}"
+            question = f"Based on the following news article, please provide the key information and main points:\n\n{grounding}"
             
         elif 'qags_xsum' in dataset_lower:
             # QAGS XSum: Extreme summarization (BBC articles)
             # Original task: Generate one-sentence summaries
-            return f"Please provide a one-sentence summary that captures the essence of this BBC article:\n\n{truncated_grounding}"
+            question = f"Please provide a one-sentence summary that captures the essence of this BBC article:\n\n{grounding}"
         
         # PARAPHRASE AND SEMANTIC SIMILARITY
         elif 'paws' in dataset_lower:
             # PAWS: Paraphrase Adversaries from Word Scrambling
             # Original task: Determine if two sentences have the same meaning
             # We ask for paraphrasing to test semantic consistency
-            return f"Please rephrase the following sentence while preserving its exact meaning:\n\n{truncated_grounding}"
+            question = f"Please rephrase the following sentence while preserving its exact meaning:\n\n{grounding}"
         
         # FACT VERIFICATION
         elif 'fever' in dataset_lower:
             # FEVER: Fact Extraction and VERification
             # Original task: Given evidence, classify claims as SUPPORTED/REFUTED/NOT ENOUGH INFO
-            return f"Based on the following evidence, please explain what conclusions can be drawn and provide a factual analysis:\n\nEvidence: {truncated_grounding}"
+            question = f"Based on the following evidence, please explain what conclusions can be drawn and provide a factual analysis:\n\nEvidence: {grounding}"
         
         # DIALOGUE SYSTEMS
         elif 'dialfact' in dataset_lower:
             # DialFact: Dialogue factual consistency
             # Original task: Generate responses in dialogue that are factually consistent
-            return f"Please continue this conversation with a factually accurate and helpful response:\n\n{truncated_grounding}"
+            question = f"Please continue this conversation with a factually accurate and helpful response:\n\n{grounding}"
         
         # QUESTION ANSWERING
         elif 'q2' in dataset_lower or 'q²' in dataset_lower:
             # Q²: Question generation and answering
             # Original task: Generate questions and answers from context
-            return f"Based on the following context, please provide relevant questions and their answers:\n\n{truncated_grounding}"
+            question = f"Based on the following context, please provide relevant questions and their answers:\n\n{grounding}"
         
         # TEXT SIMPLIFICATION AND REWRITING
         elif 'frank' in dataset_lower:
             # FRANK: Factual consistency in text rewriting
             # Original task: Rewrite text while maintaining factual accuracy
-            return f"Please rewrite the following text to make it clearer and more accessible while maintaining all factual information:\n\n{truncated_grounding}"
+            question = f"Please rewrite the following text to make it clearer and more accessible while maintaining all factual information:\n\n{grounding}"
         
         # OPEN-DOMAIN TEXT GENERATION
         elif 'begin' in dataset_lower:
             # BEGIN: Benchmark for text generation evaluation
             # Original task: Generate text continuations
-            return f"Please continue or expand on the following text in a natural and informative way:\n\n{truncated_grounding}"
+            question = f"Please continue or expand on the following text in a natural and informative way:\n\n{grounding}"
         
         # MULTI-REFERENCE EVALUATION
         elif 'mnbm' in dataset_lower:
             # MNBM: Multi-reference benchmark
             # Original task: Generate text with multiple valid references
-            return f"Please provide an informative response based on the following context:\n\n{truncated_grounding}"
+            question = f"Please provide an informative response based on the following context:\n\n{grounding}"
         
         # CLAIM VERIFICATION
         elif 'vitc' in dataset_lower or 'vitamin' in dataset_lower:
             # VitaminC: Fact verification with evidence
             # Original task: Verify claims against evidence passages
-            return f"Based on the following evidence, please verify and explain whether the associated claims are factually supported:\n\nEvidence: {truncated_grounding}"
+            question = f"Based on the following evidence, please verify and explain whether the associated claims are factually supported:\n\nEvidence: {grounding}"
         
         # FALLBACK (should rarely be used now)
         else:
             # Analyze the generated_text to infer the task
             if len(generated_text) < len(grounding) * 0.3:
                 # Likely summarization
-                return f"Please provide a concise summary of the following text:\n\n{truncated_grounding}"
+                question = f"Please provide a concise summary of the following text:\n\n{grounding}"
             elif "?" in generated_text:
                 # Likely question answering
-                return f"Based on the following information, please answer relevant questions or provide key insights:\n\n{truncated_grounding}"
+                question = f"Based on the following information, please answer relevant questions or provide key insights:\n\n{grounding}"
             else:
                 # Text continuation/expansion
-                return f"Please provide additional relevant information or expand on the following context:\n\n{truncated_grounding}"
+                question = f"Please provide additional relevant information or expand on the following context:\n\n{grounding}"
+        
+        return question
 
 def main():
     parser = argparse.ArgumentParser(description='Generate responses for TRUE benchmark evaluation')
@@ -377,6 +400,7 @@ def main():
     print(f"📁 Output directory: {args.output_dir}")
     print(f"📊 Note: Datasets with >1000 rows will be limited to first 1000")
     print(f"💾 Files will be written incrementally (line by line)")
+    print(f"✂️  Input truncation enabled (32K char limit)")
     if not args.force:
         print(f"⏭️  Complete files will be skipped automatically")
     
