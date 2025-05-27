@@ -165,3 +165,5 @@ src/
     - Questions of less than *100 words* 
     - Answers between *100 and 300 words*
 - [**WildChat** filtered dataset with ads](https://huggingface.co/datasets/HectorRguez/wildchat-1k-filtered-ads): Subset of the filtered dataset, generated with the `\insert_native_ad` endpoint. 
+    - 8 samples are missing due to `NaN` similarity scores
+    - 1 sample was removed from the **WildChat** filtered dataset because it was writen in Chinese and mistakenly labeled as English. The size of that question exceeded the model context length.
