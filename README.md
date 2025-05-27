@@ -174,4 +174,6 @@ src/
     - 8 samples are missing due to `NaN` similarity scores
     - 1 sample was removed from the **WildChat** filtered dataset because it was writen in Chinese and mistakenly labeled as English. The size of that question exceeded the model context length.
 
+- [**WildChat** datastet for DPO fine-tuning](https://huggingface.co/datasets/HectorRguez/wildchat-1k-dpo-annotation): Same as the previous dataset, but including two possible responses. 
+
 - Use this [website](https://hectorrguez.github.io/index.html) to manually annotate the DPO dataset. 

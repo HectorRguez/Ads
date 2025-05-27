@@ -27,6 +27,11 @@ DATASETS = {
         "repo": "HectorRguez/wildchat-10k-filtered",
         "description": "WildChat 10k filtered dataset", 
         "output_dir": "data/wildchat-10k-filtered"
+    },
+    "wildchat-1k-dpo-annotation": {
+        "repo": "HectorRguez/wildchat-1k-dpo-annotation",
+        "description": "WildChat 1k dataset for DPO annotation",
+        "output_dir": "data/wildchat-1k-dpo-annotation"
     }
 }
 
@@ -170,6 +175,7 @@ Examples:
   python download_datasets.py --list
   python download_datasets.py --all
   python download_datasets.py --dataset wildchat-1k-filtered-ads
+  python download_datasets.py --dataset wildchat-1k-dpo-annotation
   python download_datasets.py --dataset wildchat-1k-filtered-ads --format parquet
   python download_datasets.py --all --cache-dir ./hf_cache
         """
