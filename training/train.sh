@@ -1,0 +1,11 @@
+deepspeed train.py \
+  --model_name "/workspace/IterativeMCTS/ads/models/LLM-Research/Mistral-7B-Instruct-v0.3" \
+  --dataset_name "/workspace/IterativeMCTS/ads/human/HumanLLMs___human-like-dpo-dataset/default/0.0.0/dd82ab6a284a15765964149e6a6603ff8ed7d672" \
+  --output_dir "output/mistral-7b" \
+  --wandb_project "dpo_math" \
+  --batch_size 64 \
+  --num_epochs 5 \
+  --learning_rate 5e-5 \
+  --save_strategy "epoch" \
+  --save_steps 1000 \
+  --ds_config ds_config.json
