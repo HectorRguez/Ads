@@ -3,6 +3,7 @@ import os
 import requests
 from llama_cpp import Llama, llama_cpp
 from sentence_transformers import SentenceTransformer
+from transformers import BitsAndBytesConfig
 
 def load_models(config):
     """Load both text generation and embedding models"""
@@ -30,17 +31,26 @@ def load_models(config):
     embedding_gpu = config.getint('embedding', 'gpu_device', fallback=0)
     
     device = f'cuda:{embedding_gpu}' if torch.cuda.is_available() else 'cpu'
-    model_kwargs = { 
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+    )
+
+    model_kwargs = {
         'trust_remote_code': True,
-        'load_in_4bit': True,
+        'quantization_config': bnb_config,  # Use proper config instead of load_in_4bit
         'torch_dtype': torch.float16,
     }
+
     embedding_model = SentenceTransformer(
         embedding_path,
         device=device,
         trust_remote_code=True,
         model_kwargs=model_kwargs
     )
+
     print("✅ Embedding model loaded")
     
     return text_model, embedding_model

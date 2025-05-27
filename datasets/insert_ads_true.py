@@ -7,10 +7,10 @@ This creates CSV files with your model's responses that can be evaluated later
 import os
 import pandas as pd
 import requests
-import json
 import time
 from tqdm import tqdm
 import argparse
+import csv
 
 class TRUEResponseGenerator:
     def __init__(self, server_url="http://localhost:8888"):
@@ -58,6 +58,64 @@ class TRUEResponseGenerator:
             print(f"❌ Request error: {e}")
             return None
     
+    def is_output_complete(self, output_file, expected_rows):
+        """Check if output file exists and is complete."""
+        if not os.path.exists(output_file):
+            return False
+        
+        try:
+            existing_df = pd.read_csv(output_file)
+            if len(existing_df) == expected_rows:
+                # Check if all model responses are non-empty (excluding failed generations)
+                non_empty_responses = existing_df['model_response'].fillna('').astype(str).str.strip()
+                if len(non_empty_responses) > 0:  # At least some responses exist
+                    print(f"✅ Output file already complete: {output_file} ({len(existing_df)} rows)")
+                    return True
+            else:
+                print(f"⚠️  Incomplete output file found: {output_file} ({len(existing_df)}/{expected_rows} rows)")
+                return False
+        except Exception as e:
+            print(f"⚠️  Error reading existing output file {output_file}: {e}")
+            return False
+        
+        return False
+    
+    def get_resume_point(self, output_file):
+        """Get the number of rows already processed if resuming."""
+        if not os.path.exists(output_file):
+            return 0
+        
+        try:
+            existing_df = pd.read_csv(output_file)
+            return len(existing_df)
+        except Exception as e:
+            print(f"⚠️  Error reading existing file for resume: {e}")
+            return 0
+    
+    def write_csv_header(self, output_file, with_ads):
+        """Write CSV header to output file."""
+        headers = [
+            'original_grounding',
+            'original_generated_text', 
+            'original_label',
+            'question_for_model',
+            'model_response',
+            'dataset',
+            'with_ads',
+            'original_dataset_size',
+            'processed_rows'
+        ]
+        
+        with open(output_file, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+    
+    def append_csv_row(self, output_file, row_data):
+        """Append a single row to the CSV file."""
+        with open(output_file, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(row_data)
+    
     def process_true_dataset(self, input_csv, output_dir, dataset_name, with_ads=False):
         """
         Process a TRUE dataset and generate responses.
@@ -65,11 +123,20 @@ class TRUEResponseGenerator:
         TRUE datasets have 'grounding' text, but we need to convert this to questions
         for your Q&A model. We'll use the 'generated_text' as a template for question generation.
         """
-        print(f"\n Processing {dataset_name} dataset...")
+        print(f"\n🔄 Processing {dataset_name} dataset...")
         
         # Load TRUE dataset
         df = pd.read_csv(input_csv)
-        print(f"Loaded {len(df)} examples")
+        original_count = len(df)
+        print(f"Loaded {original_count} examples")
+        
+        # Limit to first 1000 rows if dataset is larger
+        if len(df) > 1000:
+            df = df.head(1000)
+            print(f"⚠️  Dataset has {original_count} rows, limiting to first 1000 for processing")
+        
+        expected_rows = len(df)
+        print(f"Processing {expected_rows} examples")
         
         # Check required columns
         required_cols = ['grounding', 'generated_text', 'label']
@@ -78,48 +145,79 @@ class TRUEResponseGenerator:
             print(f"❌ Missing columns: {missing_cols}")
             return None
         
-        # Generate responses
-        responses = []
-        questions = []
+        # Define output file
+        suffix = "_with_ads" if with_ads else "_no_ads"
+        output_file = os.path.join(output_dir, f"{dataset_name.lower()}_responses{suffix}.csv")
+        
+        # Check if output is already complete
+        if self.is_output_complete(output_file, expected_rows):
+            return output_file
+        
+        # Check if we need to resume processing
+        resume_from = self.get_resume_point(output_file)
+        if resume_from > 0:
+            print(f"🔄 Resuming from row {resume_from + 1}")
+        else:
+            # Write header for new file
+            self.write_csv_header(output_file, with_ads)
+        
+        # Process rows starting from resume point
         failed_count = 0
         
         print(f"🔄 Generating responses ({'with ads' if with_ads else 'without ads'})...")
         
-        for idx, row in tqdm(df.iterrows(), total=len(df), desc="Generating"):
+        # Create progress bar starting from resume point
+        rows_to_process = df.iloc[resume_from:]
+        pbar = tqdm(rows_to_process.iterrows(), 
+                   total=len(rows_to_process), 
+                   desc="Generating",
+                   initial=0)
+        
+        for idx, row in pbar:
             # Create appropriate question for this dataset
             question = self._create_question(row['grounding'], row['generated_text'], dataset_name)
-            questions.append(question)
             
             # Generate response
             response = self.generate_response(question, with_ads=with_ads)
             
-            if response is not None:
-                responses.append(response)
-            else:
-                responses.append("")  # Empty response on failure
+            if response is None:
+                response = ""  # Empty response on failure
                 failed_count += 1
+            
+            # Prepare row data
+            row_data = [
+                row['grounding'],
+                row['generated_text'],
+                row['label'],
+                question,
+                response,
+                dataset_name,
+                with_ads,
+                original_count,
+                expected_rows
+            ]
+            
+            # Write row immediately
+            self.append_csv_row(output_file, row_data)
+            
+            # Update progress bar with current status
+            pbar.set_postfix({
+                'failed': failed_count,
+                'completed': (idx - resume_from + 1)
+            })
             
             # Add small delay to avoid overwhelming server
             time.sleep(0.1)
         
-        # Create output dataframe
-        output_df = pd.DataFrame({
-            'original_grounding': df['grounding'],
-            'original_generated_text': df['generated_text'],
-            'original_label': df['label'],
-            'question_for_model': questions,
-            'model_response': responses,
-            'dataset': dataset_name,
-            'with_ads': with_ads
-        })
+        pbar.close()
         
-        # Save results
-        suffix = "_with_ads" if with_ads else "_no_ads"
-        output_file = os.path.join(output_dir, f"{dataset_name.lower()}_responses{suffix}.csv")
-        output_df.to_csv(output_file, index=False)
+        # Final verification
+        final_rows = self.get_resume_point(output_file)
         
-        print(f"✅ Saved {len(output_df)} responses to: {output_file}")
+        print(f"✅ Saved {final_rows} responses to: {output_file}")
         print(f"   Failed generations: {failed_count}")
+        if original_count > 1000:
+            print(f"   Note: Original dataset had {original_count} rows, processed first 1000")
         
         return output_file
     
@@ -235,6 +333,8 @@ def main():
                        help='Generate responses without ads')
     parser.add_argument('--both', action='store_true',
                        help='Generate both with and without ads (default)')
+    parser.add_argument('--force', action='store_true',
+                       help='Force regeneration even if output files exist')
     
     args = parser.parse_args()
     
@@ -247,6 +347,11 @@ def main():
     
     # Initialize generator
     generator = TRUEResponseGenerator(args.server_url)
+    
+    # Override completion check if force flag is used
+    if args.force:
+        print("🔄 Force mode enabled - will regenerate all files")
+        generator.is_output_complete = lambda *args: False
     
     # Define datasets to process (matching your actual files)
     all_datasets = [
@@ -268,10 +373,15 @@ def main():
         all_datasets = [(csv, name) for csv, name in all_datasets 
                        if name.lower() in [d.lower() for d in args.datasets]]
     
-    print(f" Starting response generation for {len(all_datasets)} datasets")
-    print(f" Output directory: {args.output_dir}")
+    print(f"🚀 Starting response generation for {len(all_datasets)} datasets")
+    print(f"📁 Output directory: {args.output_dir}")
+    print(f"📊 Note: Datasets with >1000 rows will be limited to first 1000")
+    print(f"💾 Files will be written incrementally (line by line)")
+    if not args.force:
+        print(f"⏭️  Complete files will be skipped automatically")
     
     generated_files = []
+    skipped_files = []
     
     # Process each dataset
     for csv_file, dataset_name in all_datasets:
@@ -303,8 +413,8 @@ def main():
             except Exception as e:
                 print(f"❌ Error processing {dataset_name} with ads: {e}")
     
-    print(f"\n Response generation completed!")
-    print(f" Generated {len(generated_files)} files:")
+    print(f"\n🎉 Response generation completed!")
+    print(f"📊 Generated/updated {len(generated_files)} files:")
     for file in generated_files:
         print(f"   - {file}")
 
