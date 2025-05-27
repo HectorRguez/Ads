@@ -1,6 +1,7 @@
 import os
 import configparser
 from flask import Flask
+from flask_cors import CORS
 from flasgger import Swagger
 
 from models import load_models
@@ -41,6 +42,7 @@ def main():
     
     # Create Flask app
     app = Flask(__name__)
+    CORS(app)
     swagger = Swagger(app)
     
     # Register all endpoints with loaded services
