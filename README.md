@@ -30,16 +30,22 @@ This will take a significant amount of time, as it builds the library from sourc
 export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 ```
 
-### 2. Download models
+### 2. Download models and datasets
 The fastest way to download the models is to use the `huggingface-hub`. 
 ```bash
 pip install huggingface-hub
 huggingface-cli login
 ```
-Run the following script to download the models. 
+Run the following script to download the models:
 ```bash
 cd models
 source download.sh
+```
+
+Run the following script to download the datasets:
+```bash
+cd datasets
+source python download.py
 ```
 
 ### 3. Configuration
@@ -167,3 +173,5 @@ src/
 - [**WildChat** filtered dataset with ads](https://huggingface.co/datasets/HectorRguez/wildchat-1k-filtered-ads): Subset of the filtered dataset, generated with the `\insert_native_ad` endpoint. 
     - 8 samples are missing due to `NaN` similarity scores
     - 1 sample was removed from the **WildChat** filtered dataset because it was writen in Chinese and mistakenly labeled as English. The size of that question exceeded the model context length.
+
+- Use this [website](https://hectorrguez.github.io/index.html) to manually annotate the DPO dataset. 
