@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPO Dataset Annotation</title>
+    <!-- Add marked.js for markdown rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e6ed;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #2d3748;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 1px solid #4a5568;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .progress-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #1a202c;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-label {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .file-label:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .order-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .order-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+        }
+
+        .order-btn:hover {
+            background: #2f855a;
+            transform: translateY(-1px);
+        }
+
+        .order-btn.active {
+            background: #276749;
+        }
+
+        .main-content {
+            padding: 30px;
+            background: #2d3748;
+        }
+
+        .question-card {
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .question-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .question-text {
+            line-height: 1.6;
+            color: #cbd5e0;
+            font-size: 0.95em;
+        }
+
+        .original-card {
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .original-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .original-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .original-text {
+            line-height: 1.6;
+            color: #cbd5e0;
+            font-size: 0.95em;
+        }
+
+        /* Markdown styling for original text */
+        .original-text h1, .original-text h2, .original-text h3, 
+        .original-text h4, .original-text h5, .original-text h6 {
+            color: #e2e8f0;
+            margin: 12px 0 6px 0;
+            font-weight: 600;
+        }
+
+        .original-text h1 { font-size: 1.3em; }
+        .original-text h2 { font-size: 1.2em; }
+        .original-text h3 { font-size: 1.1em; }
+
+        .original-text p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .original-text ul, .original-text ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .original-text li {
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+
+        .original-text code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .original-text pre {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .original-text pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        .original-text strong {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .original-text em {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        .original-text blockquote {
+            border-left: 3px solid #667eea;
+            margin: 12px 0;
+            padding: 8px 12px;
+            background: #2d3748;
+            border-radius: 0 4px 4px 0;
+            font-style: italic;
+            color: #a0aec0;
+        }
+
+        .responses-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .response-card {
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.15s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .response-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .response-card.selected {
+            border-color: #38a169;
+            background: #1a2f1a;
+            box-shadow: 0 0 20px rgba(56, 161, 105, 0.3);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .response-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .response-text {
+            line-height: 1.6;
+            color: #cbd5e0;
+            font-size: 0.95em;
+        }
+
+        /* Markdown styling for response text */
+        .response-text h1, .response-text h2, .response-text h3, 
+        .response-text h4, .response-text h5, .response-text h6 {
+            color: #e2e8f0;
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .response-text h1 { font-size: 1.5em; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .response-text h2 { font-size: 1.3em; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
+        .response-text h3 { font-size: 1.2em; }
+        .response-text h4 { font-size: 1.1em; }
+        .response-text h5 { font-size: 1.05em; }
+        .response-text h6 { font-size: 1em; }
+
+        .response-text p {
+            margin: 12px 0;
+            line-height: 1.7;
+        }
+
+        .response-text ul, .response-text ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .response-text li {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+
+        .response-text ul li {
+            list-style-type: disc;
+        }
+
+        .response-text ol li {
+            list-style-type: decimal;
+        }
+
+        .response-text blockquote {
+            border-left: 4px solid #667eea;
+            margin: 16px 0;
+            padding: 12px 16px;
+            background: #2d3748;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            color: #a0aec0;
+        }
+
+        .response-text code {
+            background: #1a202c;
+            color: #68d391;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid #4a5568;
+        }
+
+        .response-text pre {
+            background: #1a202c;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            max-width: 100%;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .response-text pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        .response-text a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .response-text a:hover {
+            border-bottom-color: #667eea;
+        }
+
+        .response-text table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .response-text th, .response-text td {
+            border: 1px solid #4a5568;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .response-text th {
+            background: #1a202c;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .response-text td {
+            background: #2d3748;
+        }
+
+        .response-text tr:nth-child(even) td {
+            background: #1a202c;
+        }
+
+        .response-text strong, .response-text b {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .response-text em, .response-text i {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        .response-text hr {
+            border: none;
+            border-top: 2px solid #4a5568;
+            margin: 24px 0;
+        }
+
+        /* Original text styling */
+        .original-text {
+            background: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #4a5568;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #cbd5e0;
+        }
+
+        .original-text h1, .original-text h2, .original-text h3, 
+        .original-text h4, .original-text h5, .original-text h6 {
+            color: #e2e8f0;
+            margin: 12px 0 6px 0;
+            font-weight: 600;
+        }
+
+        .original-text p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .original-text code {
+            background: #1a202c;
+            color: #68d391;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        /* Company info styling */
+        .company-info {
+            background: #1a202c;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #4a5568;
+        }
+
+        .company-name {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .company-description {
+            color: #a0aec0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Highlight company name in text */
+        .highlighted-company {
+            background-color: #667eea !important;
+            color: white !important;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-width: 120px;
+        }
+
+        .prefer-btn {
+            background: #38a169;
+            color: white;
+        }
+
+        .prefer-btn:hover {
+            background: #2f855a;
+            transform: translateY(-2px);
+        }
+
+        .prefer-btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .discard-btn {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .discard-btn:hover {
+            background: #c53030;
+            transform: translateY(-2px);
+        }
+
+        .both-good-btn {
+            background: #3182ce;
+            color: white;
+        }
+
+        .both-good-btn:hover {
+            background: #2c5282;
+            transform: translateY(-2px);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #4a5568;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .nav-btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .counter {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #a0aec0;
+            font-size: 1.2em;
+        }
+
+        .save-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .save-status.success {
+            background: #38a169;
+            opacity: 1;
+        }
+
+        .save-status.error {
+            background: #e53e3e;
+            opacity: 1;
+        }
+
+        .save-status.info {
+            background: #3182ce;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .responses-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DPO Dataset Annotation</h1>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div style="margin-top: 10px; font-size: 1.1em;">
+                    <span id="progressText">0 / 0 completed</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" accept=".json">
+                    <label for="fileInput" class="file-label">📁 Load Dataset</label>
+                </div>
+                
+                <div class="order-controls">
+                    <span style="font-weight: 600; color: #495057;">Order:</span>
+                    <button class="order-btn active" id="forwardBtn" onclick="setOrder('forward')">Forward</button>
+                    <button class="order-btn" id="backwardBtn" onclick="setOrder('backward')">Backward</button>
+                </div>
+                
+                <button class="order-btn" onclick="downloadDataset()" id="downloadBtn" disabled>💾 Download Results</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="loadingScreen" class="loading">
+                Please load a dataset to begin annotation
+            </div>
+
+            <div id="annotationScreen" style="display: none;">
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-label">Question</span>
+                    </div>
+                    <div class="question-text" id="questionText"></div>
+                </div>
+                
+                <div class="original-card">
+                    <div class="original-header">
+                        <span class="original-label">Original Response</span>
+                    </div>
+                    <div class="response-text" id="originalText"></div>
+                </div>
+
+                <div class="responses-container">
+                    <div class="response-card" id="responseA" onclick="selectResponse('A')">
+                        <div class="response-header">
+                            <span class="response-label">Response A</span>
+                        </div>
+                        <div class="response-text" id="responseAText"></div>
+                    </div>
+
+                    <div class="response-card" id="responseB" onclick="selectResponse('B')">
+                        <div class="response-header">
+                            <span class="response-label">Response B</span>
+                        </div>
+                        <div class="response-text" id="responseBText"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn both-good-btn" onclick="markBothGood()">
+                        👍 Both Good
+                    </button>
+                    <button class="action-btn discard-btn" onclick="markBothBad()">
+                        👎 Both Bad
+                    </button>
+                </div>
+
+                <div class="navigation">
+                    <button class="nav-btn" id="prevBtn" onclick="previousItem()" disabled>← Previous</button>
+                    <div class="counter">
+                        <span id="currentItem">1</span> / <span id="totalItems">0</span>
+                    </div>
+                    <button class="nav-btn" id="nextBtn" onclick="nextItem()" disabled>Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="save-status" id="saveStatus"></div>
+
+    <script>
+        let dataset = [];
+        let currentIndex = 0;
+        let order = 'forward';
+        let selectedResponse = null;
+        let datasetKey = null; // Key for localStorage
+
+        // Auto-save functionality
+        function saveToLocalStorage() {
+            if (datasetKey && dataset.length > 0) {
+                try {
+                    localStorage.setItem(datasetKey, JSON.stringify(dataset));
+                    console.log('Dataset auto-saved to localStorage');
+                } catch (error) {
+                    console.error('Failed to save to localStorage:', error);
+                }
+            }
+        }
+
+        function loadFromLocalStorage(key) {
+            try {
+                const saved = localStorage.getItem(key);
+                return saved ? JSON.parse(saved) : null;
+            } catch (error) {
+                console.error('Failed to load from localStorage:', error);
+                return null;
+            }
+        }
+
+        function generateDatasetKey(dataset) {
+            // Generate a unique key based on dataset content
+            const firstItem = dataset[0];
+            const lastItem = dataset[dataset.length - 1];
+            const hash = btoa(JSON.stringify({
+                length: dataset.length,
+                first: firstItem?.metadata?.question?.substring(0, 50),
+                last: lastItem?.metadata?.question?.substring(0, 50)
+            })).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+            return `dpo_dataset_${hash}`;
+        }
+
+        function setOrder(newOrder) {
+            order = newOrder;
+            document.getElementById('forwardBtn').classList.toggle('active', order === 'forward');
+            document.getElementById('backwardBtn').classList.toggle('active', order === 'backward');
+            
+            if (dataset.length > 0) {
+                // Find first unannotated item in the new order
+                if (order === 'forward') {
+                    currentIndex = 0;
+                    const firstUnannotated = findNextUnannotated();
+                    if (firstUnannotated !== -1) {
+                        currentIndex = firstUnannotated;
+                    }
+                } else {
+                    currentIndex = dataset.length - 1;
+                    const firstUnannotated = findNextUnannotated();
+                    if (firstUnannotated !== -1) {
+                        currentIndex = firstUnannotated;
+                    }
+                }
+                displayCurrentItem();
+            }
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const newDataset = JSON.parse(e.target.result);
+                        const newKey = generateDatasetKey(newDataset);
+                        
+                        // Check if we have a saved version of this dataset
+                        const savedDataset = loadFromLocalStorage(newKey);
+                        if (savedDataset && savedDataset.length === newDataset.length) {
+                            if (confirm('Found previously saved annotations for this dataset. Do you want to resume from where you left off?')) {
+                                dataset = savedDataset;
+                                showSaveStatus('Resumed from saved progress!', 'info');
+                            } else {
+                                dataset = newDataset;
+                                showSaveStatus('Started fresh with new dataset!', 'info');
+                            }
+                        } else {
+                            dataset = newDataset;
+                            showSaveStatus('New dataset loaded!', 'success');
+                        }
+                        
+                        datasetKey = newKey;
+                        
+                        // Initialize to first unannotated item
+                        if (order === 'forward') {
+                            currentIndex = 0;
+                            const firstUnannotated = findNextUnannotated();
+                            if (firstUnannotated !== -1) {
+                                currentIndex = firstUnannotated;
+                            }
+                        } else {
+                            currentIndex = dataset.length - 1;
+                            const firstUnannotated = findNextUnannotated();
+                            if (firstUnannotated !== -1) {
+                                currentIndex = firstUnannotated;
+                            }
+                        }
+                        
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('annotationScreen').style.display = 'block';
+                        document.getElementById('downloadBtn').disabled = false;
+                        updateProgress();
+                        displayCurrentItem();
+                        
+                        // Save initial state
+                        saveToLocalStorage();
+                        
+                        // Show how many are already annotated
+                        const alreadyAnnotated = dataset.filter(item => item.preference && item.preference !== '').length;
+                        if (alreadyAnnotated > 0) {
+                            showSaveStatus(`Found ${alreadyAnnotated} already annotated items`, 'info');
+                        }
+                    } catch (error) {
+                        alert('Error parsing JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function updateProgress() {
+            const completed = dataset.filter(item => item.preference && item.preference !== '').length;
+            const total = dataset.length;
+            const percentage = total > 0 ? (completed / total) * 100 : 0;
+            
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${completed} / ${total} completed`;
+        }
+
+        function findNextUnannotated() {
+            if (order === 'forward') {
+                for (let i = currentIndex; i < dataset.length; i++) {
+                    if (!dataset[i].preference || dataset[i].preference === '') {
+                        return i;
+                    }
+                }
+                return -1; // No more unannotated items
+            } else {
+                for (let i = currentIndex; i >= 0; i--) {
+                    if (!dataset[i].preference || dataset[i].preference === '') {
+                        return i;
+                    }
+                }
+                return -1; // No more unannotated items
+            }
+        }
+
+        function findPreviousUnannotated() {
+            if (order === 'forward') {
+                for (let i = currentIndex - 1; i >= 0; i--) {
+                    if (!dataset[i].preference || dataset[i].preference === '') {
+                        return i;
+                    }
+                }
+                return -1; // No more unannotated items
+            } else {
+                for (let i = currentIndex + 1; i < dataset.length; i++) {
+                    if (!dataset[i].preference || dataset[i].preference === '') {
+                        return i;
+                    }
+                }
+                return -1; // No more unannotated items
+            }
+        }
+
+        function goToNextUnannotated() {
+            const nextIndex = findNextUnannotated();
+            if (nextIndex !== -1 && nextIndex !== currentIndex) {
+                currentIndex = nextIndex;
+                displayCurrentItem();
+            } else {
+                // All items are annotated
+                showSaveStatus('All items have been annotated!', 'success');
+            }
+        }
+
+        function highlightCompanyName(text, companyName) {
+            if (!companyName || !text) return text;
+            
+            // Create a case-insensitive regex to find the company name
+            const regex = new RegExp(`\\b${companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\')}\\b`, 'gi');
+            function displayCurrentItem() {
+            if (dataset.length === 0) return;
+
+            const item = dataset[currentIndex];
+            const question = item.metadata?.question || 'No question available';
+            const originalText = item.metadata?.original_answer || 'No original text available';
+            
+            // Render original text with markdown
+            const renderedOriginalText = marked.parse(originalText);
+            
+            document.getElementById('questionText').innerHTML = `
+                <strong>Question:</strong> ${question}<br><br>
+                <strong>Original Text:</strong><br>
+                <div class="original-text">${renderedOriginalText}</div>
+            `;
+
+            // Randomize response order for display
+            const showResponse1First = Math.random() < 0.5;
+            let responseAText, responseBText, responseAKey, responseBKey;
+            
+            if (showResponse1First) {
+                responseAText = item.response_1;
+                responseBText = item.response_2;
+                responseAKey = 'response_1';
+                responseBKey = 'response_2';
+            } else {
+                responseAText = item.response_2;
+                responseBText = item.response_1;
+                responseAKey = 'response_2';
+                responseBKey = 'response_1';
+            }
+
+            // Render responses with markdown
+            const renderedResponseA = marked.parse(responseAText);
+            const renderedResponseB = marked.parse(responseBText);
+
+            document.getElementById('responseAText').innerHTML = renderedResponseA;
+            document.getElementById('responseBText').innerHTML = renderedResponseB;
+            
+            // Store which response is which for later reference
+            document.getElementById('responseA').dataset.responseKey = responseAKey;
+            document.getElementById('responseB').dataset.responseKey = responseBKey;
+
+            // Update counters
+            document.getElementById('currentItem').textContent = currentIndex + 1;
+            document.getElementById('totalItems').textContent = dataset.length;
+
+            // Update navigation buttons - check if there are more unannotated items
+            const hasNextUnannotated = findNextUnannotated() !== currentIndex;
+            const hasPrevUnannotated = findPreviousUnannotated() !== -1;
+            
+            document.getElementById('prevBtn').disabled = !hasPrevUnannotated;
+            document.getElementById('nextBtn').disabled = !hasNextUnannotated;
+
+            // Reset selection
+            clearSelection();
+            
+            // Highlight if already annotated
+            if (item.preference) {
+                const statusElement = document.createElement('div');
+                statusElement.style.cssText = 'margin-top: 15px; padding: 10px; background: #2d3748; border-radius: 6px; color: #68d391; font-weight: 600; border: 1px solid #38a169;';
+                statusElement.textContent = `Already annotated: ${item.preference}`;
+                document.getElementById('questionText').appendChild(statusElement);
+            }
+        }
+            return text.replace(regex, `<span class="highlighted-company">${companyName}</span>`);
+        }
+
+        function displayCurrentItem() {
+            if (dataset.length === 0) return;
+
+            const item = dataset[currentIndex];
+            const question = item.metadata?.question || 'No question available';
+            const originalText = item.metadata?.original_answer || 'No original text available';
+            
+            // Get company info for highlighting (but don't display it)
+            const adMetadata = item.metadata?.response_1_ad_metadata || item.metadata?.response_2_ad_metadata || {};
+            const topProducts = adMetadata.top_products || [];
+            const selectedProduct = topProducts[0] || {};
+            const companyName = selectedProduct.name || '';
+            
+            // Display the question
+            document.getElementById('questionText').textContent = question;
+            
+            // Display the original text with markdown rendering
+            const renderedOriginalText = marked.parse(originalText);
+            document.getElementById('originalText').innerHTML = renderedOriginalText;
+
+            // Randomize response order for display
+            const showResponse1First = Math.random() < 0.5;
+            let responseAText, responseBText, responseAKey, responseBKey;
+            
+            if (showResponse1First) {
+                responseAText = item.response_1;
+                responseBText = item.response_2;
+                responseAKey = 'response_1';
+                responseBKey = 'response_2';
+            } else {
+                responseAText = item.response_2;
+                responseBText = item.response_1;
+                responseAKey = 'response_2';
+                responseBKey = 'response_1';
+            }
+
+            // Render responses with markdown and highlight company name
+            const renderedResponseA = marked.parse(responseAText);
+            const renderedResponseB = marked.parse(responseBText);
+            
+            const highlightedResponseA = highlightCompanyName(renderedResponseA, companyName);
+            const highlightedResponseB = highlightCompanyName(renderedResponseB, companyName);
+
+            document.getElementById('responseAText').innerHTML = highlightedResponseA;
+            document.getElementById('responseBText').innerHTML = highlightedResponseB;
+            
+            // Store which response is which for later reference
+            document.getElementById('responseA').dataset.responseKey = responseAKey;
+            document.getElementById('responseB').dataset.responseKey = responseBKey;
+
+            // Update counters
+            document.getElementById('currentItem').textContent = currentIndex + 1;
+            document.getElementById('totalItems').textContent = dataset.length;
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = (order === 'forward' && currentIndex === 0) || 
+                                                         (order === 'backward' && currentIndex === dataset.length - 1);
+            document.getElementById('nextBtn').disabled = (order === 'forward' && currentIndex === dataset.length - 1) || 
+                                                         (order === 'backward' && currentIndex === 0);
+
+            // Reset selection
+            clearSelection();
+            
+            // Highlight if already annotated
+            if (item.preference) {
+                const statusElement = document.createElement('div');
+                statusElement.style.cssText = 'margin-top: 15px; padding: 10px; background: #2d3748; border-radius: 6px; color: #68d391; font-weight: 600; border: 1px solid #38a169;';
+                statusElement.textContent = `Status: ${item.preference}`;
+                document.getElementById('questionText').appendChild(statusElement);
+            }
+        }
+
+        function selectResponse(response) {
+            const responseKey = document.getElementById('response' + response).dataset.responseKey;
+            dataset[currentIndex].preference = responseKey;
+            saveToLocalStorage(); // Auto-save
+            showSaveStatus('Preference saved!', 'success');
+            updateProgress();
+            
+            // Visual feedback for selection
+            clearSelection();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('response' + response).classList.add('selected');
+            
+            // Auto-advance after a brief delay
+            setTimeout(() => {
+                goToNextAvailable();
+            }, 100);
+        }
+
+        function clearSelection() {
+            selectedResponse = null;
+            document.getElementById('responseA').classList.remove('selected');
+            document.getElementById('responseB').classList.remove('selected');
+        }
+
+        function preferSelected() {
+            // This function is no longer needed but keeping for compatibility
+            return;
+        }
+
+        function markBothGood() {
+            dataset[currentIndex].preference = 'both_good';
+            saveToLocalStorage(); // Auto-save
+            showSaveStatus('Marked as both good!', 'success');
+            updateProgress();
+            setTimeout(() => {
+                goToNextAvailable();
+            }, 200);
+        }
+
+        function markBothBad() {
+            dataset[currentIndex].preference = 'both_bad';
+            saveToLocalStorage(); // Auto-save
+            showSaveStatus('Marked as both bad!', 'success');
+            updateProgress();
+            setTimeout(() => {
+                goToNextAvailable();
+            }, 200);
+        }
+
+        function goToNextAvailable() {
+            // Auto-advance to next unannotated item
+            setTimeout(() => {
+                goToNextUnannotated();
+            }, 200);
+        }
+
+        function nextItem() {
+            if (order === 'forward' && currentIndex < dataset.length - 1) {
+                currentIndex++;
+                displayCurrentItem();
+            } else if (order === 'backward' && currentIndex > 0) {
+                currentIndex--;
+                displayCurrentItem();
+            }
+        }
+
+        function previousItem() {
+            if (order === 'forward' && currentIndex > 0) {
+                currentIndex--;
+                displayCurrentItem();
+            } else if (order === 'backward' && currentIndex < dataset.length - 1) {
+                currentIndex++;
+                displayCurrentItem();
+            }
+        }
+
+        function downloadDataset() {
+            const dataStr = JSON.stringify(dataset, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'annotated_dataset.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Also save to localStorage as backup
+            saveToLocalStorage();
+            showSaveStatus('Dataset downloaded and saved!', 'success');
+        }
+
+        function showSaveStatus(message, type) {
+            const statusEl = document.getElementById('saveStatus');
+            statusEl.textContent = message;
+            statusEl.className = `save-status ${type}`;
+            setTimeout(() => {
+                statusEl.classList.remove(type);
+            }, 3000);
+        }
+
+        // Auto-save every 30 seconds as additional backup
+        setInterval(() => {
+            if (dataset.length > 0) {
+                saveToLocalStorage();
+            }
+        }, 30000);
+
+        // Save before page unload
+        window.addEventListener('beforeunload', function(e) {
+            if (dataset.length > 0) {
+                saveToLocalStorage();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (dataset.length === 0) return;
+            
+            switch(e.key) {
+                case '1':
+                    selectResponse('A');
+                    break;
+                case '2':
+                    selectResponse('B');
+                    break;
+                case 'g':
+                    markBothGood();
+                    break;
+                case 'b':
+                    markBothBad();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousItem();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextItem();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

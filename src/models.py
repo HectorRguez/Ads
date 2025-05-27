@@ -1,6 +1,7 @@
 import torch
 import os
 import requests
+import random
 from llama_cpp import Llama, llama_cpp
 from sentence_transformers import SentenceTransformer
 from transformers import BitsAndBytesConfig
@@ -56,20 +57,42 @@ def load_models(config):
     return text_model, embedding_model
 
 def generate_text_local(model, prompt, max_tokens=8096):
-    """Generate text using the loaded model"""
-    result = model(
-        prompt,
-        temperature=0.6,
-        max_tokens=max_tokens,
-        top_p=0.5,
-        repeat_penalty=1.1
-    )
+    """Generate text using the loaded model with random sampling strategy"""
+
+    # result = model(
+    #     prompt,
+    #     temperature=0.6,
+    #     max_tokens=max_tokens,
+    #     top_p=0.5,
+    #     repeat_penalty=1.1
+    # )
+    
+    # Randomly select between conservative and creative parameters
+    if random.choice([True, False]):
+        # Conservative strategy
+        result = model(
+            prompt,
+            temperature=0.4,
+            max_tokens=max_tokens,
+            top_p=0.7,
+            top_k=40,
+            repeat_penalty=1.1
+        )
+    else:
+        # Creative strategy
+        result = model(
+            prompt,
+            temperature=0.9,
+            max_tokens=max_tokens,
+            top_p=0.9,
+            top_k=80,
+            repeat_penalty=1.05
+        )
     
     if result and result['choices']:
         return result['choices'][0]['text'].strip()
     else:
         raise Exception("No result from model")
-    
 
 def generate_text_remote(prompt, model='deepseek-chat', temperature=0.7, max_tokens=8096):
     """Generate text using DeepSeek API"""
