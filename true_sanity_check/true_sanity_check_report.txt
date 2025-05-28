@@ -1,0 +1,167 @@
+================================================================================
+TRUE MODEL SANITY CHECK REPORT
+Evaluating Original Grounding vs Original Generated Text
+Evaluator Model: /data/hector/models/t5_xxl_true_nli
+================================================================================
+
+📊 SANITY CHECK RESULTS
+--------------------------------------------------
+
+unknown:
+  Samples: 1000/2500
+  TRUE Consistency Score: 0.5865
+  Consistency Rate: 17.30%
+  High Consistency: 17.30%
+  Medium Consistency: 82.70%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 83.80%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.7126
+  PR-AUC: 0.4531
+  Label Distribution: {0: 905, 1: 95}
+
+unknown:
+  Samples: 239/239
+  TRUE Consistency Score: 0.8536
+  Consistency Rate: 70.71%
+  High Consistency: 70.71%
+  Medium Consistency: 29.29%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 71.97%
+  Valid GT Comparisons: 239
+  ROC-AUC: 0.7259
+  PR-AUC: 0.8070
+  Label Distribution: {0: 123, 1: 116}
+
+unknown:
+  Samples: 1000/8689
+  TRUE Consistency Score: 0.5575
+  Consistency Rate: 11.50%
+  High Consistency: 11.50%
+  Medium Consistency: 88.50%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 71.30%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.6403
+  PR-AUC: 0.7758
+  Label Distribution: {0: 602, 1: 398}
+
+unknown:
+  Samples: 1000/8000
+  TRUE Consistency Score: 0.7275
+  Consistency Rate: 45.50%
+  High Consistency: 45.50%
+  Medium Consistency: 54.50%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 94.00%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.9398
+  PR-AUC: 0.9478
+  Label Distribution: {0: 549, 1: 451}
+
+unknown:
+  Samples: 1000/1600
+  TRUE Consistency Score: 0.9735
+  Consistency Rate: 94.70%
+  High Consistency: 94.70%
+  Medium Consistency: 5.30%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 85.10%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.6257
+  PR-AUC: 0.9225
+  Label Distribution: {0: 196, 1: 804}
+
+unknown:
+  Samples: 1000/1088
+  TRUE Consistency Score: 0.6320
+  Consistency Rate: 26.40%
+  High Consistency: 26.40%
+  Medium Consistency: 73.60%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 64.00%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.6642
+  PR-AUC: 0.7952
+  Label Distribution: {0: 452, 1: 548}
+
+unknown:
+  Samples: 1000/18209
+  TRUE Consistency Score: 0.6820
+  Consistency Rate: 36.40%
+  High Consistency: 36.40%
+  Medium Consistency: 63.60%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 91.90%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.9154
+  PR-AUC: 0.9040
+  Label Distribution: {0: 649, 1: 351}
+
+unknown:
+  Samples: 671/671
+  TRUE Consistency Score: 0.7563
+  Consistency Rate: 51.27%
+  High Consistency: 51.27%
+  Medium Consistency: 48.73%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 79.58%
+  Valid GT Comparisons: 671
+  ROC-AUC: 0.8381
+  PR-AUC: 0.8005
+  Label Distribution: {0: 448, 1: 223}
+
+unknown:
+  Samples: 235/235
+  TRUE Consistency Score: 0.9277
+  Consistency Rate: 85.53%
+  High Consistency: 85.53%
+  Medium Consistency: 14.47%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 60.00%
+  Valid GT Comparisons: 235
+  ROC-AUC: 0.6138
+  PR-AUC: 0.7667
+  Label Distribution: {0: 122, 1: 113}
+
+unknown:
+  Samples: 836/836
+  TRUE Consistency Score: 0.6304
+  Consistency Rate: 26.08%
+  High Consistency: 26.08%
+  Medium Consistency: 73.92%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 80.86%
+  Valid GT Comparisons: 836
+  ROC-AUC: 0.7581
+  PR-AUC: 0.7583
+  Label Distribution: {0: 554, 1: 282}
+
+unknown:
+  Samples: 1000/63054
+  TRUE Consistency Score: 0.7415
+  Consistency Rate: 48.30%
+  High Consistency: 48.30%
+  Medium Consistency: 51.70%
+  Low Consistency: 0.00%
+  Ground Truth Accuracy: 82.00%
+  Valid GT Comparisons: 1000
+  ROC-AUC: 0.8409
+  PR-AUC: 0.8184
+  Label Distribution: {0: 637, 1: 363}
+
+🎯 SANITY CHECK INTERPRETATION
+----------------------------------------
+Overall Average: 0.7335
+✅ GOOD: TRUE model shows reasonable consistency
+   The model appears to be functioning properly
+
+💡 RECOMMENDATIONS
+------------------------------
+✅ Sanity check passed! You can proceed with confidence to evaluate your LLM responses
+
+📋 NEXT STEPS
+--------------------
+1. If sanity check looks good, run TRUE evaluation on your LLM responses
+2. Compare LLM scores to these baseline original scores
+3. Look for significant drops in consistency scores

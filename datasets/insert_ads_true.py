@@ -385,10 +385,10 @@ def main():
         ('q2_download.csv', 'Q2'),
         ('qags_cnndm_download.csv', 'QAGS_CNNDM'),
         ('qags_xsum_download.csv', 'QAGS_XSum'),
-        ('paws_download.csv', 'PAWS'),
         ('summeval_download.csv', 'SummEval'),
+        ('vitc_dev_download.csv', 'VitaminC'),
+        ('paws_download.csv', 'PAWS'),
         ('fever_dev_download.csv', 'FEVER'),
-        ('vitc_dev_download.csv', 'VitaminC')  # Added VitaminC dataset
     ]
     
     # Filter datasets if specified

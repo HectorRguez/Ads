@@ -21,7 +21,10 @@ def load_models(config):
         n_ctx=max_tokens,
         split_mode=llama_cpp.LLAMA_SPLIT_MODE_NONE,
         main_gpu=gpu_device,
-        verbose=False
+        verbose=False,
+        use_mmap=True,    # Enable memory mapping
+        use_mlock=False,  # Disable memory locking
+        low_vram=True     # Enable low VRAM mode if available
     )
     print("✅ Text model loaded")
 
