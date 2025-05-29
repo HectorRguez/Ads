@@ -62,6 +62,11 @@ def load_models(config):
 def generate_text_local(model, prompt, max_tokens=8096):
     """Generate text using the loaded model with random sampling strategy"""
 
+    MAX_INPUT_CHARS = 4000  # Conservative limit
+    if len(prompt) > MAX_INPUT_CHARS:
+        print(f"Truncating input: {len(prompt)} -> {MAX_INPUT_CHARS} chars")
+        prompt = prompt[:MAX_INPUT_CHARS] + "\n\n[Truncated]"
+
     result = model(
         prompt,
         temperature=0.6,

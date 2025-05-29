@@ -1,0 +1,54 @@
+{
+  "dataset": "FEVER",
+  "total_samples": 5,
+  "avg_consistency_score": 0.6,
+  "scores": [
+    0.5,
+    0.5,
+    1.0,
+    0.5,
+    0.5
+  ],
+  "detailed_results": [
+    {
+      "index": 0,
+      "grounding_length": 372,
+      "generated_length": 108,
+      "label": 0,
+      "consistency_score": 0.5,
+      "error_message": ""
+    },
+    {
+      "index": 1,
+      "grounding_length": 190,
+      "generated_length": 25,
+      "label": 0,
+      "consistency_score": 0.5,
+      "error_message": ""
+    },
+    {
+      "index": 2,
+      "grounding_length": 160,
+      "generated_length": 46,
+      "label": 1,
+      "consistency_score": 1.0,
+      "error_message": ""
+    },
+    {
+      "index": 3,
+      "grounding_length": 426,
+      "generated_length": 33,
+      "label": 0,
+      "consistency_score": 0.5,
+      "error_message": ""
+    },
+    {
+      "index": 4,
+      "grounding_length": 179,
+      "generated_length": 51,
+      "label": 0,
+      "consistency_score": 0.5,
+      "error_message": ""
+    }
+  ]
+}

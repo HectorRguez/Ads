@@ -192,7 +192,7 @@ class TRUESanityCheckEvaluator:
         
         # Check for required columns - we need original grounding and generated
         possible_grounding_cols = ['grounding']
-        possible_generated_cols = ['generated_text']
+        possible_generated_cols = ['generated_text_with_ads']
         possible_label_cols = ['original_label', 'label', 'ground_truth']
         
         grounding_col = None
@@ -458,15 +458,15 @@ class TRUESanityCheckEvaluator:
 def main():
     parser = argparse.ArgumentParser(description='Sanity check: Evaluate original data with TRUE models')
     parser.add_argument('--data_dir', type=str,
-                        default='/data/hector/datasets/true_datasets',
+                        default='/data/hector/baseline_with_ads',
                        help='Directory containing original dataset CSV files')
     parser.add_argument('--output_dir', type=str, default='true_sanity_check',
                        help='Directory to save sanity check results')
     parser.add_argument('--model_path', type=str, 
-                       default='/data/hector/models/t5_11b_trueteacher_and_anli',
+                       default='/data/hector/models/t5_xxl_true_nli',
                        help='Path to local TRUE model directory')
     parser.add_argument('--model_name', type=str, 
-                       default='google/t5_11b_trueteacher_and_anli',
+                       default='google/t5_xxl_true_nli',
                        help='HuggingFace model name (used if local path not found)')
     parser.add_argument('--quantization_bits', type=int, default=8,
                        choices=[4, 8],
