@@ -27,7 +27,8 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, text_g
         raise ValueError("No products found in database for ad insertion")
 
     # Step 2: The best matching product is the first one (index 0) in the returned list
-    
+    selected_product = related_products[0]
+    product_link = selected_product[2]
 
     # Step 3: Load ad insertion template based on whether URL exists
     if product_link and product_link.strip():  # Check if URL exists and is not empty
