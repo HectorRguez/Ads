@@ -26,13 +26,7 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, text_g
     if not related_products:
         raise ValueError("No products found in database for ad insertion")
 
-    # Step 2: Select the best matching product
-    selected_product = related_products[0]
-    company_name = selected_product[0]
-    category = selected_product[1]
-    product_link = selected_product[2]
-    description = selected_product[3]
-    similarity_score = selected_product[4]
+    # Step 2: The best matching product is the first one (index 0) in the returned list
 
     # Step 3: Load ad insertion template based on whether URL exists
     if product_link and product_link.strip():  # Check if URL exists and is not empty
@@ -48,10 +42,7 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, text_g
     ad_prompt = ad_template.format(
         original_prompt=prompt,
         original_text=text_content,
-        company_name=company_name,
-        product_link=product_link,
-        category=category,
-        description=description
+        related_products=related_products,
     )
     
     # Step 5: Generate ad text
@@ -59,11 +50,11 @@ def get_related_products_and_ad(rag_system, config, prompt, text_content, text_g
     
     # Step 6: Format results - FIXED to include URL
     selected_product_info = {
-        "name": company_name,
-        "category": category,
-        "url": product_link,           # ADD URL here
-        "description": description,
-        "similarity_score": float(similarity_score)
+        "name": related_products[0][0],
+        "category": related_products[0][1],
+        "url": related_products[0][2],
+        "description": related_products[0][3],
+        "similarity_score": float(related_products[0][4]),
     }
     
     # FIXED: Update unpacking to handle 5 elements (name, category, url, description, similarity)
