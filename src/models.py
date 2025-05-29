@@ -67,35 +67,35 @@ def generate_text_local(model, prompt, max_tokens=8096):
         print(f"Truncating input: {len(prompt)} -> {MAX_INPUT_CHARS} chars")
         prompt = prompt[:MAX_INPUT_CHARS] + "\n\n[Truncated]"
 
-    result = model(
-        prompt,
-        temperature=0.6,
-        max_tokens=max_tokens,
-        top_p=0.5,
-        repeat_penalty=1.1
-    )
+    # result = model(
+    #     prompt,
+    #     temperature=0.6,
+    #     max_tokens=max_tokens,
+    #     top_p=0.5,
+    #     repeat_penalty=1.1
+    # )
     
     # Randomly select between conservative and creative parameters
-    # if random.choice([True, False]):
-    #     # Conservative strategy
-    #     result = model(
-    #         prompt,
-    #         temperature=0.4,
-    #         max_tokens=max_tokens,
-    #         top_p=0.7,
-    #         top_k=40,
-    #         repeat_penalty=1.1
-    #     )
-    # else:
-    #     # Creative strategy
-    #     result = model(
-    #         prompt,
-    #         temperature=0.9,
-    #         max_tokens=max_tokens,
-    #         top_p=0.9,
-    #         top_k=80,
-    #         repeat_penalty=1.05
-    #     )
+    if random.choice([True, False]):
+        # Conservative strategy
+        result = model(
+            prompt,
+            temperature=0.4,
+            max_tokens=max_tokens,
+            top_p=0.7,
+            top_k=40,
+            repeat_penalty=1.1
+        )
+    else:
+        # Creative strategy
+        result = model(
+            prompt,
+            temperature=0.9,
+            max_tokens=max_tokens,
+            top_p=0.9,
+            top_k=80,
+            repeat_penalty=1.05
+        )
     
     if result and result['choices']:
         return result['choices'][0]['text'].strip()

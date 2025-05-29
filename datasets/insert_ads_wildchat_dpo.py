@@ -150,7 +150,7 @@ class DPODatasetGenerator:
             print(f"⚠️  Error reading existing file for resume: {e}")
             return 0
 
-    def create_dpo_dataset(self, input_dataset_path: str, output_path: str, max_items: int = 1000, 
+    def create_dpo_dataset(self, input_dataset_path: str, output_path: str, max_items: int = 10000, 
                           delay_between_requests: float = 1.0):
         """
         Create DPO dataset by generating diverse responses for each item via API
@@ -263,16 +263,16 @@ def main():
     """Main function to run the DPO dataset generation."""
     parser = argparse.ArgumentParser(description='Generate DPO dataset using API for diverse responses')
     parser.add_argument('--input_file', type=str,
-                       default='datasets/wildchat_10k_filtered.json',
+                       default='datasets/wildchat_10000_robust_sample.json',
                        help='Input JSON file with Q&A pairs that have ad metadata')
     parser.add_argument('--output_file', type=str,
-                       default='datasets/dpo_wildchat_diverse.json',
+                       default='datasets/wildchat_10000_robust_ads_dpo.json',
                        help='Output JSON file with DPO pairs')
     parser.add_argument('--server_url', type=str,
                        default='http://localhost:8888',
                        help='URL of the server with native ads API')
     parser.add_argument('--max_items', type=int,
-                       default=1000,
+                       default=10000,
                        help='Maximum number of items to process')
     parser.add_argument('--delay', type=float,
                        default=1.0,
