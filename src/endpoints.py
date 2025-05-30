@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, send_from_directory
 from models import generate_text_local, generate_text_remote
 
 def load_template(config, template_key):
@@ -84,6 +84,16 @@ def register_endpoints(app, text_model, embedding_model, rag_system, config):
                 "rag_system": rag_system is not None
             }
         })
+    
+    @app.route('/')
+    def serve_index():
+        """Serve the main web UI"""
+        return send_from_directory('webUI', 'index.html')
+
+    @app.route('/<path:filename>')
+    def serve_static_files(filename):
+        """Serve static files (CSS, JS, images, etc.) from webUI directory"""
+        return send_from_directory('webUI', filename)
     
     @app.route('/infer_local', methods=['POST'])
     def infer_local():
