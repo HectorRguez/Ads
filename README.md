@@ -130,7 +130,7 @@ This tests all functionality including:
 - RAG search with various queries
 - Ad integration
 
-### Web UIb (This section needs to be improved)
+### Web UI (This section needs to be improved)
 Open ssh tunnel:
 ```bash
 ssh -L 8888:localhost:8888 user@server
