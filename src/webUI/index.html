@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Native Ads Inference</title>
+    <!-- Add marked.js for markdown rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e6ed;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #2d3748;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 1px solid #4a5568;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .main-content {
+            padding: 30px;
+            background: #2d3748;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .model-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+        }
+
+        .model-label {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .model-dropdown {
+            background: #2d3748;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            color: #e0e6ed;
+            padding: 8px 12px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-width: 200px;
+        }
+
+        .model-dropdown:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .model-dropdown:hover {
+            border-color: #667eea;
+        }
+
+        .model-option {
+            background: #2d3748;
+            color: #e0e6ed;
+            padding: 8px;
+        }
+
+        .model-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #a0aec0;
+            font-size: 0.9em;
+        }
+
+        .model-logo {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .api-key-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+        }
+
+        .api-key-input {
+            width: 100%;
+            background: #2d3748;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 1em;
+            margin-top: 8px;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .api-key-label {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .question-input {
+            width: 100%;
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 20px;
+            color: #e0e6ed;
+            font-size: 1em;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .question-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .question-input::placeholder {
+            color: #a0aec0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            gap: 15px;
+        }
+
+        .send-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            font-size: 1em;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .send-btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4a5568;
+        }
+
+        .status-indicator.connected {
+            background: #38a169;
+        }
+
+        .status-indicator.error {
+            background: #e53e3e;
+        }
+
+        .responses-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .response-card {
+            background: #1a202c;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .response-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .response-text {
+            line-height: 1.6;
+            color: #cbd5e0;
+            font-size: 0.95em;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        /* Markdown styling for response text */
+        .response-text h1, .response-text h2, .response-text h3, 
+        .response-text h4, .response-text h5, .response-text h6 {
+            color: #e2e8f0;
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .response-text h1 { font-size: 1.5em; border-bottom: 2px solid #4a5568; padding-bottom: 8px; }
+        .response-text h2 { font-size: 1.3em; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
+        .response-text h3 { font-size: 1.2em; }
+
+        .response-text p {
+            margin: 12px 0;
+            line-height: 1.7;
+        }
+
+        .response-text ul, .response-text ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .response-text li {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+
+        .response-text blockquote {
+            border-left: 4px solid #667eea;
+            margin: 16px 0;
+            padding: 12px 16px;
+            background: #2d3748;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            color: #a0aec0;
+        }
+
+        .response-text code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid #4a5568;
+        }
+
+        .response-text pre {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            max-width: 100%;
+        }
+
+        .response-text pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        .response-text a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .response-text a:hover {
+            border-bottom-color: #667eea;
+        }
+
+        .response-text strong, .response-text b {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .response-text em, .response-text i {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        /* Company name highlighting */
+        .highlighted-company {
+            background-color: #667eea !important;
+            color: white !important;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #a0aec0;
+            font-size: 1.2em;
+        }
+
+        .error-message {
+            background: #742a2a;
+            border: 1px solid #e53e3e;
+            color: #fed7d7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .product-info {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .product-name {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .product-description {
+            color: #a0aec0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .responses-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LLM Native Ads Inference</h1>
+            <p>Compare original responses with native advertisement integration</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="model-selector">
+                    <label for="modelSelect" class="model-label">Model:</label>
+                    <select id="modelSelect" class="model-dropdown">
+                        <option value="mistral" class="model-option">Mistral 7B (Local)</option>
+                        <option value="deepseek" class="model-option">DeepSeek V3 (API)</option>
+                        <option value="chatgpt" class="model-option">ChatGPT 4 (API)</option>
+                    </select>
+                    <div class="model-info">
+                        <img id="modelLogo" src="mistral.png" alt="Model Logo" class="model-logo">
+                        <span id="modelName">Mistral 7B (Local)</span>
+                    </div>
+                </div>
+
+                <div class="api-key-section" id="apiKeySection" style="display: none;">
+                    <label for="apiKeyInput" class="api-key-label" id="apiKeyLabel">API Key:</label>
+                    <input 
+                        type="password" 
+                        id="apiKeyInput" 
+                        class="api-key-input" 
+                        placeholder="Enter your API key..."
+                    >
+                </div>
+                
+                <textarea 
+                    id="questionInput" 
+                    class="question-input" 
+                    placeholder="Enter your question here..."
+                    autofocus
+                ></textarea>
+                
+                <div class="controls">
+                    <button id="sendBtn" class="send-btn">Send Question</button>
+                    <div class="connection-status">
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="responsesSection" style="display: none;">
+                <div class="responses-container">
+                    <div class="response-card">
+                        <div class="response-header">
+                            <span class="response-label">Original Response</span>
+                        </div>
+                        <div class="response-text" id="originalResponse"></div>
+                    </div>
+
+                    <div class="response-card">
+                        <div class="response-header">
+                            <span class="response-label">Response with Native Ads</span>
+                        </div>
+                        <div class="response-text" id="adResponse"></div>
+                        <div id="productInfo" class="product-info" style="display: none;">
+                            <div class="product-name" id="productName"></div>
+                            <div class="product-description" id="productDescription"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loadingSection" class="loading" style="display: none;">
+                <p id="loadingMessage">Generating response...</p>
+            </div>
+
+            <div id="errorSection" style="display: none;">
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        marked.setOptions({ pedantic: false });
+
+        // Configuration
+        const BASE_URL = 'http://localhost:8888'; // Your server URL
+        const HEADERS = {'Content-Type': 'application/json'};
+        
+        // Model configurations
+        const MODELS = {
+            mistral: {
+                name: 'mistral-7b-instruct-v0.3',
+                endpoint: '/infer_local_native_ads',
+                logo: 'mistral.png',
+                type: 'Local',
+                requiresApiKey: false
+            },
+            deepseek: {
+                name: 'DeepSeek-V3',
+                apiUrl: 'https://api.deepseek.com/v1/chat/completions',
+                logo: 'deepseek.png',
+                type: 'API',
+                keyLabel: 'DeepSeek API Key',
+                requiresApiKey: true
+            },
+            chatgpt: {
+                name: 'ChatGPT-4.0-mini',
+                apiUrl: 'https://api.openai.com/v1/chat/completions',
+                logo: 'openai.png',
+                type: 'API',
+                keyLabel: 'OpenAI API Key',
+                requiresApiKey: true
+            }
+        };
+
+        // DOM elements
+        const modelSelect = document.getElementById('modelSelect');
+        const modelLogo = document.getElementById('modelLogo');
+        const modelName = document.getElementById('modelName');
+        const apiKeySection = document.getElementById('apiKeySection');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const apiKeyLabel = document.getElementById('apiKeyLabel');
+        const questionInput = document.getElementById('questionInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const responsesSection = document.getElementById('responsesSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const errorSection = document.getElementById('errorSection');
+        const originalResponse = document.getElementById('originalResponse');
+        const adResponse = document.getElementById('adResponse');
+        const productInfo = document.getElementById('productInfo');
+        const productName = document.getElementById('productName');
+        const productDescription = document.getElementById('productDescription');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Company name highlighting function
+        function highlightCompanyName(text, companyName) {
+            if (!companyName || !text) return text;
+            
+            // First, temporarily replace URLs with placeholders to protect them
+            const urlPlaceholders = [];
+            let protectedText = text.replace(/(https?:\/\/[^\s<]+)/gi, (match) => {
+                const placeholder = `__URL_PLACEHOLDER_${urlPlaceholders.length}__`;
+                urlPlaceholders.push(match);
+                return placeholder;
+            });
+            
+            // Also protect domain-like patterns (e.g., company.com)
+            protectedText = protectedText.replace(/(\b\w+\.\w{2,}\b)/gi, (match) => {
+                const placeholder = `__DOMAIN_PLACEHOLDER_${urlPlaceholders.length}__`;
+                urlPlaceholders.push(match);
+                return placeholder;
+            });
+            
+            // Now safely highlight the company name
+            const regex = new RegExp(`\\b${companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+            protectedText = protectedText.replace(regex, `<span class="highlighted-company">${companyName}</span>`);
+            
+            // Restore the protected URLs and domains
+            urlPlaceholders.forEach((original, index) => {
+                const placeholder = `__URL_PLACEHOLDER_${index}__`;
+                const domainPlaceholder = `__DOMAIN_PLACEHOLDER_${index}__`;
+                protectedText = protectedText.replace(placeholder, original);
+                protectedText = protectedText.replace(domainPlaceholder, original);
+            });
+            
+            return protectedText;
+        }
+
+        function getCurrentModel() {
+            return MODELS[modelSelect.value];
+        }
+
+        // Update model UI when selection changes
+        function updateModelUI() {
+            const model = getCurrentModel();
+            modelLogo.src = model.logo;
+            modelLogo.alt = `${model.name} Logo`;
+            modelName.textContent = `${model.name} (${model.type})`;
+            
+            // Show/hide API key section based on model
+            if (model.requiresApiKey) {
+                apiKeySection.style.display = 'block';
+                apiKeyLabel.textContent = model.keyLabel;
+                apiKeyInput.placeholder = `Enter your ${model.keyLabel} API key...`;
+                
+                // Try to read API key from environment/local storage
+                loadApiKeyFromEnvironment(model);
+            } else {
+                apiKeySection.style.display = 'none';
+            }
+            
+            // Update connection status based on model type
+            testConnection();
+        }
+
+        // Try to load API key from environment variables or browser storage
+        function loadApiKeyFromEnvironment(model) {
+            let apiKey = '';
+            
+            try {
+                // Try to read from client-side environment variables
+                if (modelSelect.value === 'deepseek') {
+                    // Check multiple possible environment variable patterns
+                    apiKey = window.DEEPSEEK_API_KEY || 
+                            window.process?.env?.DEEPSEEK_API_KEY || 
+                            globalThis.DEEPSEEK_API_KEY ||
+                            (typeof process !== 'undefined' && process.env?.DEEPSEEK_API_KEY);
+                } else if (modelSelect.value === 'chatgpt') {
+                    apiKey = window.OPENAI_API_KEY || 
+                            window.process?.env?.OPENAI_API_KEY || 
+                            globalThis.OPENAI_API_KEY ||
+                            (typeof process !== 'undefined' && process.env?.OPENAI_API_KEY);
+                }
+            } catch (e) {
+                console.log('Environment variables not available');
+            }
+
+            if (apiKey) {
+                apiKeyInput.value = apiKey;
+                // Show that key was loaded from environment
+                apiKeyInput.placeholder = 'API key loaded from client environment';
+                apiKeyInput.style.backgroundColor = '#2d5016'; // Subtle green tint
+                console.log(`Loaded ${model.name} API key from client environment`);
+            } else {
+                resetApiKeyInput();
+            }
+        }
+
+        // Reset API key input to default state
+        function resetApiKeyInput() {
+            apiKeyInput.value = '';
+            apiKeyInput.placeholder = `Enter your ${getCurrentModel().keyLabel}...`;
+            apiKeyInput.style.backgroundColor = '#2d3748'; // Default background
+        }
+
+        // Call LLM API directly
+        async function callLLMAPI(question, apiKey) {
+            const model = getCurrentModel();
+            
+            let requestBody;
+            let headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            };
+
+            if (modelSelect.value === 'deepseek') {
+                requestBody = {
+                    model: 'deepseek-chat',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: question
+                        }
+                    ],
+                    stream: false
+                };
+            } else if (modelSelect.value === 'chatgpt') {
+                requestBody = {
+                    model: 'gpt-4',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: question
+                        }
+                    ]
+                };
+            }
+
+            const response = await fetch(model.apiUrl, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // Insert native ads using your server endpoint
+        async function insertNativeAds(originalPrompt, originalText) {
+            try {
+                const response = await fetch(`${BASE_URL}/insert_native_ads`, {
+                    method: 'POST',
+                    headers: HEADERS,
+                    body: JSON.stringify({
+                        prompt: originalPrompt,
+                        text: originalText
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Native ads insertion failed:', error);
+                // Return fallback data if ads insertion fails
+                return {
+                    text_with_ads: originalText,
+                    selected_product: null,
+                    related_products: []
+                };
+            }
+        }
+
+        // Send question to LLM (either via API or local server)
+        async function sendQuestion() {
+            const question = questionInput.value.trim();
+            const model = getCurrentModel();
+            
+            if (!question) {
+                showError('Please enter a question');
+                return;
+            }
+
+            if (model.requiresApiKey) {
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) {
+                    showError(`Please enter your ${model.name} API key`);
+                    return;
+                }
+            }
+
+            // Show loading state
+            showLoading(true);
+            hideError();
+            hideResponses();
+            sendBtn.disabled = true;
+
+            try {
+                let originalText;
+                let adData;
+
+                if (model.requiresApiKey) {
+                    // For API models (DeepSeek, ChatGPT): Call API then insert ads
+                    updateLoadingMessage('Calling ' + model.name + ' API...');
+                    originalText = await callLLMAPI(question, apiKeyInput.value.trim());
+
+                    updateLoadingMessage('Generating native advertisements...');
+                    adData = await insertNativeAds(question, originalText);
+
+                    displayResponses({
+                        original: originalText,
+                        withAds: adData.text_with_ads,
+                        selectedProduct: adData.selected_product,
+                        relatedProducts: adData.related_products
+                    }, model);
+                } else {
+                    // For Mistral: Use original server endpoint
+                    updateLoadingMessage('Processing with Mistral 7B...');
+                    const response = await fetch(`${BASE_URL}${model.endpoint}`, {
+                        method: 'POST',
+                        headers: HEADERS,
+                        body: JSON.stringify({ question: question })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    displayMistralResponses(data, model);
+                }
+
+            } catch (error) {
+                console.error('Request failed:', error);
+                showError(`Failed to get response: ${error.message}`);
+            } finally {
+                showLoading(false);
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch(`${BASE_URL}/health`, { 
+                    method: 'GET',
+                    timeout: 5000 
+                });
+                
+                if (response.ok) {
+                    updateConnectionStatus('connected', 'Server Online');
+                    return true;
+                } else {
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
+            } catch (error) {
+                updateConnectionStatus('error', 'Server Offline');
+                console.error('Connection test failed:', error);
+                return false;
+            }
+        }
+
+        // Display responses for API models (DeepSeek, ChatGPT)
+        function displayResponses(data, model) {
+            // Render original response with markdown
+            const renderedOriginal = marked.parse(data.original || 'No response');
+            originalResponse.innerHTML = renderedOriginal;
+
+            // Render ad response with markdown and highlighting
+            const renderedAd = marked.parse(data.withAds || 'No response');
+            const companyName = data.selectedProduct?.name || '';
+            const highlightedAd = highlightCompanyName(renderedAd, companyName);
+            adResponse.innerHTML = highlightedAd;
+
+            // Show product information if available
+            if (data.selectedProduct) {
+                productName.textContent = data.selectedProduct.name || '';
+                productDescription.textContent = data.selectedProduct.description || '';
+                productInfo.style.display = 'block';
+            } else {
+                productInfo.style.display = 'none';
+            }
+
+            // Update response headers with model info
+            document.querySelector('.response-label').textContent = `Original Response (${model.name})`;
+            document.querySelectorAll('.response-label')[1].textContent = `Response with Native Ads`;
+
+            showResponses();
+        }
+
+        // Display responses for Mistral (original format)
+        function displayMistralResponses(data, model) {
+            // Render original response with markdown
+            const renderedOriginal = marked.parse(data.answer || 'No response');
+            originalResponse.innerHTML = renderedOriginal;
+
+            // Render ad response with markdown and highlighting
+            const renderedAd = marked.parse(data.answer_with_ads || 'No response');
+            const companyName = data.selected_product?.name || '';
+            const highlightedAd = highlightCompanyName(renderedAd, companyName);
+            adResponse.innerHTML = highlightedAd;
+
+            // Show product information if available
+            if (data.selected_product) {
+                productName.textContent = data.selected_product.name || '';
+                productDescription.textContent = data.selected_product.description || '';
+                productInfo.style.display = 'block';
+            } else {
+                productInfo.style.display = 'none';
+            }
+
+            // Update response headers with model info
+            document.querySelector('.response-label').textContent = `Original Response (${model.name})`;
+            document.querySelectorAll('.response-label')[1].textContent = `Response with Native Ads (${model.name})`;
+
+            showResponses();
+        }
+
+        // Update connection status indicator
+        function updateConnectionStatus(status, message) {
+            statusIndicator.className = `status-indicator ${status}`;
+            statusText.textContent = message;
+        }
+
+        // UI state management
+        function showLoading(show) {
+            loadingSection.style.display = show ? 'block' : 'none';
+        }
+
+        function updateLoadingMessage(message) {
+            loadingMessage.textContent = message;
+        }
+
+        function showResponses() {
+            responsesSection.style.display = 'block';
+        }
+
+        function hideResponses() {
+            responsesSection.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+        }
+
+        function hideError() {
+            errorSection.style.display = 'none';
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendQuestion);
+
+        modelSelect.addEventListener('change', updateModelUI);
+
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                sendQuestion();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateModelUI(); // Set initial model UI
+            testConnection(); // Test connection for Mistral
+            questionInput.focus();
+        });
+
+        // Test connection periodically for Mistral
+        setInterval(() => {
+            if (modelSelect.value === 'mistral') {
+                testConnection();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
