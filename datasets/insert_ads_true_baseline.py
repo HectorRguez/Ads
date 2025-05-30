@@ -271,10 +271,10 @@ def main():
                        default='/data/hector/datasets/true_datasets',
                        help='Directory containing TRUE datasets')
     parser.add_argument('--output_dir', type=str,
-                       default='/data/hector/baseline_with_ads',
+                       default='/data/hector/baseline_with_ads_better_dataset_better_prompt',
                        help='Directory to save enhanced baseline responses')
     parser.add_argument('--server_url', type=str,
-                       default='http://localhost:8888',
+                       default='http://localhost:8080',
                        help='URL of your ad insertion server')
     parser.add_argument('--datasets', nargs='+',
                        help='Specific datasets to process (leave empty for all)')
@@ -312,7 +312,6 @@ def main():
         ('summeval_download.csv', 'SummEval'),
         ('vitc_dev_download.csv', 'VitaminC'),
         ('paws_download.csv', 'PAWS'),
-        ('fever_dev_download.csv', 'FEVER'),
     ]
     
     # Filter datasets if specified

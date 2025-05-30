@@ -68,11 +68,9 @@ class DPODatasetGenerator:
             return None, None
         
         # Generate first response (baseline)
-        print(f"  Generating response 1...")
         result1 = self.generate_api_response(original_answer)
         
         # Generate second response (with different parameters handled by backend)
-        print(f"  Generating response 2...")
         result2 = self.generate_api_response(original_answer)
         
         response1 = None
@@ -193,9 +191,6 @@ class DPODatasetGenerator:
         
         for idx, item in pbar:
             actual_idx = resume_from + idx
-            
-            print(f"\n📝 Processing item {actual_idx + 1}/{expected_items}")
-            print(f"Question: {item.get('question', '')[:100]}...")
             
             # Generate two diverse responses using API
             response1, response2 = self.generate_diverse_responses(item)

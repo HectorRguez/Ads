@@ -75,7 +75,7 @@ def generate_text_local(model, prompt, max_tokens=8096):
     #     repeat_penalty=1.1
     # )
     
-    # Randomly select between conservative and creative parameters
+    # # Randomly select between conservative and creative parameters
     if random.choice([True, False]):
         # Conservative strategy
         result = model(
