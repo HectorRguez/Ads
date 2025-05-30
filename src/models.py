@@ -63,6 +63,7 @@ def generate_text_local(model, prompt, max_tokens=8096):
         prompt,
         temperature=0.6,
         max_tokens=max_tokens,
+        top_k=40,
         top_p=0.5,
         repeat_penalty=1.1
     )
