@@ -1,13 +1,14 @@
-
-CUDA_VISIBLE_DEVICES=1 nohup deepspeed train.py \
-    --model_name "/workspace/IterativeMCTS/ads/models/LLM-Research/Mistral-7B-v0.3" \
-    --dataset_name "/workspace/IterativeMCTS/ads/dpo_dataset.json" \
-    --output_dir "output/mistral-7b" \
-    --wandb_project "dpo" \
-    --batch_size 32 \
-    --num_epochs 5 \
-    --learning_rate 1e-5 \
-    --save_strategy "epoch" \
-    --save_steps 500 \
-    --ds_config ds_config.json \
-> train.log 2>&1 &
+python training/train_lora.py \
+  --model_name "/data/hector/models/mistral-7b-instruct" \
+  --dataset_name "/home/hector/Ads/datasets/processed_dpo_dataset.json" \
+  --output_dir "/data/hector/models/mistral-7b-instruct-ultra-safe-dpo-more-epochs" \
+  --batch_size 4 \
+  --num_epochs 5 \
+  --learning_rate 1e-6 \
+  --beta 0.65 \
+  --lora_rank 16 \
+  --lora_alpha 16 \
+  --lora_dropout 0.15 \
+  --save_strategy "no" \
+  --save_steps 100 \
+  --eval_steps 100

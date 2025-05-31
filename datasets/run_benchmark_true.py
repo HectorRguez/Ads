@@ -170,7 +170,7 @@ class TRUEModelEvaluator:
         # Load dataset
         df = pd.read_csv(csv_file)
         
-        required_columns = ['original_grounding', 'model_response', 'dataset']
+        required_columns = ['grounding', 'model_response', 'dataset']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             raise ValueError(f"Missing required columns: {missing_columns}")
@@ -334,7 +334,7 @@ def main():
     parser.add_argument('--output_dir', type=str, default='true_evaluations',
                        help='Directory to save evaluation results')
     parser.add_argument('--model_name', type=str, 
-                       default='google/t5_xxl_true_nli_mixture',
+                       default='/data/hector/models/t5_xxl_true_nli',
                        choices=[
                            'google/t5_xxl_true_nli_mixture',
                            'google/t5_11b_trueteacher_and_anli'
